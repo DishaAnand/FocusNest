@@ -67,14 +67,6 @@ const HomeScreen = () => {
             <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
                 <Ionicons name="add" size={28} color="#fff" />
             </TouchableOpacity>
-
-            {/* Bottom Navigation */}
-            <View style={styles.bottomBar}>
-                <Ionicons name="reorder-three" size={24} />
-                <Ionicons name="time-outline" size={24} />
-                <Ionicons name="bar-chart-outline" size={24} />
-                <Ionicons name="settings-outline" size={24} />
-            </View>
         </View>
     );
 };
