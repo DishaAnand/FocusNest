@@ -1,7 +1,12 @@
 import { StyleSheet } from 'react-native';
 
-export const RADIUS = 100;
-export const CIRCLE_LENGTH = 2 * Math.PI * RADIUS;
+export const RING_STROKE  = 12;      // width of the progress ring
+export const DOT_RADIUS   = 10;      // visible handle
+export const RADIUS       = 100;     // size of the inner hole you WANT
+export const OUTER        = RADIUS + RING_STROKE / 2 + DOT_RADIUS;
+export const SIZE         = OUTER * 2;                 // total canvas
+export const CENTER       = OUTER;                     // circle centre
+export const CIRCLE_LEN   = 2 * Math.PI * RADIUS;
 
 export const styles = StyleSheet.create({
   container: {
@@ -11,8 +16,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   svgWrapper: {
-    width: RADIUS * 2,
-    height: RADIUS * 2,
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 20,
@@ -23,35 +26,26 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111',
   },
+  /* extras (same as before) */
   taskTag: {
     paddingHorizontal: 20,
     paddingVertical: 8,
     backgroundColor: '#D3F0EB',
     borderRadius: 20,
   },
-  taskTagText: {
-    fontWeight: 'bold',
-    color: '#23766D',
-  },
+  taskTagText: { fontWeight: 'bold', color: '#23766D' },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '70%',
     marginTop: 30,
   },
-  cancelText: {
-    fontSize: 16,
-    color: '#333',
-  },
+  cancelText: { fontSize: 16, color: '#333' },
   startBtn: {
     backgroundColor: '#23766D',
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 999,
   },
-  startText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  startText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });

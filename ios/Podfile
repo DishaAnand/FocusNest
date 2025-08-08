@@ -17,6 +17,7 @@ end
 target 'FocusNest' do
   config = use_native_modules!
   pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+pod 'RNReanimated', :path => '../node_modules/react-native-reanimated' 
 
 
   use_react_native!(

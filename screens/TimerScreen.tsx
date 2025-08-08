@@ -1,127 +1,135 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
-  useAnimatedProps,
   withTiming,
-  interpolate,
+  useAnimatedProps,
+  Easing,
 } from 'react-native-reanimated';
-import { styles, CIRCLE_LENGTH, RADIUS } from './TimerScreen.styles';
+
+import {
+  styles,
+  RING_STROKE,
+  DOT_RADIUS,
+  RADIUS,
+  CENTER,
+  SIZE,
+  CIRCLE_LEN,
+} from './TimerScreen.styles';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const FOCUS = 5 * 60;                               // 25-min timer
 
-const FOCUS_DURATION = 25 * 60; // 25 min
+export default function TimerScreen() {
+  /* state ----------------------------------------------------------------- */
+  const [left, setLeft]   = useState(FOCUS);
+  const [run,  setRun]    = useState(false);
 
-const TimerScreen = () => {
-  const [secondsLeft, setSecondsLeft] = useState(FOCUS_DURATION);
-  const [isRunning, setIsRunning] = useState(false);
+  const progress = useSharedValue(0);                // 0->1
+  const theta    = useSharedValue(0);                // 0->2π
 
-  const progress = useSharedValue(0); // 0 to 1
-  const rotation = useSharedValue(0); // 0 to 2π
-
-  // Animate progress change
+  /* animate each second --------------------------------------------------- */
   useEffect(() => {
-    progress.value = withTiming(1 - secondsLeft / FOCUS_DURATION, { duration: 300 });
-    rotation.value = withTiming((1 - secondsLeft / FOCUS_DURATION) * 2 * Math.PI, { duration: 300 });
-  }, [secondsLeft]);
+    const frac = 1 - left / FOCUS;
 
-  // Timer logic
+    progress.value = withTiming(frac, { duration: 400, easing: Easing.linear });
+    theta.value    = withTiming(frac * 2 * Math.PI, { duration: 400, easing: Easing.linear });
+  }, [left]);
+
+  /* ticking loop ----------------------------------------------------------- */
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isRunning) {
-      interval = setInterval(() => {
-        setSecondsLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(interval!);
-            setIsRunning(false);
-            return 0;
-          }
+    let id: ReturnType<typeof setInterval> | undefined;
+
+    if (run) {
+      id = setInterval(() => {
+        setLeft(prev => {
+          if (prev <= 1) { clearInterval(id!); setRun(false); return 0; }
           return prev - 1;
         });
       }, 1000);
     }
-    return () => {
-  if (interval) clearInterval(interval);
-};
-  }, [isRunning]);
+    return () => id && clearInterval(id);
+  }, [run]);
 
-  const formatTime = () => {
-    const m = Math.floor(secondsLeft / 60);
-    const s = secondsLeft % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  /* helpers ---------------------------------------------------------------- */
+  const mmss = () => {
+    const m = Math.floor(left / 60).toString().padStart(2, '0');
+    const s = (left % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
-  const startPause = () => setIsRunning(prev => !prev);
-  const cancel = () => {
-    setIsRunning(false);
-    setSecondsLeft(FOCUS_DURATION);
-  };
-
-  const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: CIRCLE_LENGTH * (1 - progress.value),
+  /* animated props --------------------------------------------------------- */
+  const ringProps = useAnimatedProps(() => ({
+    strokeDashoffset: CIRCLE_LEN * (1 - progress.value),
   }));
 
-  const animatedHandleStyle = useAnimatedProps(() => {
-    const angle = rotation.value;
-    const x = RADIUS + RADIUS * Math.sin(angle);
-    const y = RADIUS - RADIUS * Math.cos(angle);
-    return {
-      cx: x,
-      cy: y,
-    };
-  });
+  const dotProps = useAnimatedProps(() => {
+  // shift by -90° so dot starts at 12-o’clock and stays glued to the ring’s tip
+  const a = theta.value
 
+  return {
+    cx: CENTER + RADIUS * Math.cos(a),
+    cy: CENTER + RADIUS * Math.sin(a),
+  };
+});
+
+  /* render ----------------------------------------------------------------- */
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.taskTag}>
         <Text style={styles.taskTagText}>Do Gym</Text>
       </TouchableOpacity>
 
-      <View style={styles.svgWrapper}>
-        <Svg width={RADIUS * 2} height={RADIUS * 2}>
-          <G rotation="-90" origin={`${RADIUS}, ${RADIUS}`}>
-            {/* Base circle */}
+      <View style={[styles.svgWrapper, { width: SIZE, height: SIZE }]}>
+        <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+          <G rotation="-90" origin={`${CENTER}, ${CENTER}`}>
+
+            {/* 1 ▸ grey base ring */}
             <Circle
-              cx={RADIUS}
-              cy={RADIUS}
+              cx={CENTER}
+              cy={CENTER}
               r={RADIUS}
               stroke="#23766D"
-              strokeWidth={12}
+              strokeWidth={RING_STROKE}
               fill="none"
             />
-            {/* Progress */}
+
+            {/* 2 ▸ green progress ring */}
             <AnimatedCircle
-              cx={RADIUS}
-              cy={RADIUS}
+              cx={CENTER}
+              cy={CENTER}
               r={RADIUS}
-              stroke="#ccc"
-              strokeWidth={12}
+              stroke="#E6E6E6"
+              strokeWidth={RING_STROKE}
+              strokeLinecap="round"
               fill="none"
-              strokeDasharray={CIRCLE_LENGTH}
-              animatedProps={animatedProps}
+              strokeDasharray={CIRCLE_LEN}
+              animatedProps={ringProps}
             />
-            {/* Handle */}
+
+            {/* 3 ▸ white-centre dot */}
             <AnimatedCircle
-              r={8}
-              fill="#23766D"
-              animatedProps={animatedHandleStyle}
+              r={DOT_RADIUS}
+              fill="#fff"
+              stroke="#23766D"
+              strokeWidth={2}
+              animatedProps={dotProps}
             />
           </G>
         </Svg>
-        <Text style={styles.timerText}>{formatTime()}</Text>
+
+        <Text style={styles.timerText}>{mmss()}</Text>
       </View>
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity onPress={cancel}>
+        <TouchableOpacity onPress={() => { setRun(false); setLeft(FOCUS); }}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.startBtn} onPress={startPause}>
-          <Text style={styles.startText}>{isRunning ? 'Pause' : 'Start'}</Text>
+        <TouchableOpacity style={styles.startBtn} onPress={() => setRun(p => !p)}>
+          <Text style={styles.startText}>{run ? 'Pause' : 'Start'}</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-};
-
-export default TimerScreen;
+}
