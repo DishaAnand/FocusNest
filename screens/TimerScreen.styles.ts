@@ -1,8 +1,8 @@
 import { StyleSheet } from 'react-native';
 
-export const RING_STROKE  = 12;      // width of the progress ring
-export const DOT_RADIUS   = 10;      // visible handle
-export const RADIUS       = 100;     // size of the inner hole you WANT
+export const RING_STROKE  = 8;      // width of the progress ring
+export const DOT_RADIUS   = 13;      // visible handle
+export const RADIUS       = 130;     // size of the inner hole you WANT
 export const OUTER        = RADIUS + RING_STROKE / 2 + DOT_RADIUS;
 export const SIZE         = OUTER * 2;                 // total canvas
 export const CENTER       = OUTER;                     // circle centre
@@ -22,8 +22,7 @@ export const styles = StyleSheet.create({
   },
   timerText: {
     position: 'absolute',
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 60,
     color: '#111',
   },
   /* extras (same as before) */
