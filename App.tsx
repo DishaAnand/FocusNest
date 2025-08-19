@@ -4,8 +4,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-import HomeScreen from './screens/HomeScreen';
-import TimerScreen from './screens/TimerScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import TimerScreen from './src/screens/TimerScreen';
 
 Ionicons.loadFont();
 

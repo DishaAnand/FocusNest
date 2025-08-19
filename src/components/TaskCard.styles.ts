@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { COLORS } from '../src/constants/colors';
+import { COLORS } from '../constants/colors';
 
 export const styles = StyleSheet.create({
   /** outer shell clips card + delete */
