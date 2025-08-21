@@ -8,6 +8,18 @@ export const SIZE         = OUTER * 2;                 // total canvas
 export const CENTER       = OUTER;                     // circle centre
 export const CIRCLE_LEN   = 2 * Math.PI * RADIUS;
 
+// 🎨 Focus palette
+export const FOCUS_COLOR     = '#23766D'; // ring + dot stroke
+export const FOCUS_BG        = '#23766D'; // primary/cancel buttons
+export const FOCUS_CHIP_BG   = '#E6F3F1'; // chip base tint
+export const FOCUS_CHIP_TEXT = '#23766D'; // chip text
+
+// 🎨 Break palette (soft violet family)
+export const BREAK_COLOR     = '#6B5B95'; // ring + dot stroke
+export const BREAK_BG        = '#6B5B95'; // primary/cancel buttons
+export const BREAK_CHIP_BG   = '#EFEAF6'; // chip base tint in break
+export const BREAK_CHIP_TEXT = '#6B5B95'; // chip text in break
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -18,24 +30,19 @@ export const styles = StyleSheet.create({
 
   /* tiny chips row */
   chipsList: {
-    maxHeight: 44,                 // cap overall height of the row
+    maxHeight: 44,
   },
   chip: {
     height: 32,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: '#E6F3F1',
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  chipActive: {
-    backgroundColor: '#23766D',
-  },
   chipText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#23766D',
   },
   chipTextActive: {
     color: '#fff',
@@ -54,7 +61,7 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  /* buttons (unchanged) */
+  /* buttons */
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -62,7 +69,6 @@ export const styles = StyleSheet.create({
     marginTop: 30,
   },
   startBtn: {
-    backgroundColor: '#23766D',
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 999,

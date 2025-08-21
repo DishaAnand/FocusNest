@@ -26,10 +26,23 @@ import {
   CENTER,
   SIZE,
   CIRCLE_LEN,
+  FOCUS_COLOR,
+  FOCUS_BG,
+  FOCUS_CHIP_BG,
+  FOCUS_CHIP_TEXT,
+  BREAK_COLOR,
+  BREAK_BG,
+  BREAK_CHIP_BG,
+  BREAK_CHIP_TEXT,
 } from './TimerScreen.styles';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const FOCUS = 1 * 60; // seconds
+
+// ⏱ durations
+const FOCUS_SECS = 1 * 60;      // keep your 1:00 focus for testing
+const BREAK_SECS = 1 * 60;      // 5:00 break
+
+type Mode = 'focus' | 'break';
 
 export default function TimerScreen() {
   const { params } = useRoute<TimerRoute>();
@@ -42,8 +55,11 @@ export default function TimerScreen() {
   const initialTask = params?.task ?? allTasks[0];
   const [task, setTask] = useState<Task | undefined>(initialTask);
 
-  /* ───────────────────────────── timer state ───────────────────────────── */
-  const [left, setLeft] = useState(FOCUS);
+  /* ───────────────────────────── mode & timer state ────────────────────── */
+  const [mode, setMode] = useState<Mode>('focus');
+  const DURATION = mode === 'focus' ? FOCUS_SECS : BREAK_SECS;
+
+  const [left, setLeft] = useState(DURATION);
   const [run, setRun] = useState(false);
 
   // rings
@@ -71,25 +87,25 @@ export default function TimerScreen() {
     }
   }, [left, hasBeeped]);
 
-  /* ───────────────────────── lifecycle & interactions ──────────────────── */
-  // auto-start from Home
+  /* ─────────────── auto-start from Home (always starts Focus) ──────────── */
   useEffect(() => {
     if (params?.autoStart) {
-      setLeft(FOCUS);
+      setMode('focus');
+      setLeft(FOCUS_SECS);
       setRun(true);
       setHasBeeped(false);
     }
   }, [params?.autoStart]);
 
-  // if the selected task changes (chip tap), reset timer
+  /* ───── if selected task changes (chip), reset the current phase only ─── */
   useEffect(() => {
     if (!task) return;
     setRun(false);
-    setLeft(FOCUS);
+    setLeft(mode === 'focus' ? FOCUS_SECS : BREAK_SECS);
     setHasBeeped(false);
-  }, [task?.id]);
+  }, [task?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // keep state in sync if parent passes a different single task
+  /* ───────── keep state in sync if parent passes a different single task ─ */
   useEffect(() => {
     if (!params?.task) return;
     setTask(params.task);
@@ -97,10 +113,10 @@ export default function TimerScreen() {
 
   /* ───────────────────────── animations & ticking ──────────────────────── */
   useEffect(() => {
-    const frac = 1 - left / FOCUS;
+    const frac = 1 - left / DURATION;
     progress.value = withTiming(frac, { duration: 400, easing: Easing.linear });
     theta.value = withTiming(frac * 2 * Math.PI, { duration: 400, easing: Easing.linear });
-  }, [left]);
+  }, [left, DURATION, progress, theta]);
 
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | undefined;
@@ -114,6 +130,25 @@ export default function TimerScreen() {
     }
     return () => id && clearInterval(id);
   }, [run]);
+
+  // 🔁 Phase transitions:
+  // Focus → Break: DO NOT autostart (your change #1)
+  // Break → stop at 00:00; user decides next step
+  useEffect(() => {
+    if (left !== 0 || !hasBeeped) return;
+
+    if (mode === 'focus') {
+      // move to Break, but do NOT autostart
+      setMode('break');
+      setLeft(BREAK_SECS);
+      setRun(false);
+      setHasBeeped(false);
+    } else {
+      // finished Break: stop at 00:00 (user can Start to begin new Focus)
+      setRun(false);
+      // remain in break with left=0
+    }
+  }, [left, hasBeeped, mode]);
 
   /* ───────────────────────────── helpers ──────────────────────────────── */
   const mmss = () => {
@@ -135,13 +170,53 @@ export default function TimerScreen() {
   });
 
   const isFinished = left === 0;
-  const isPaused = !run && left > 0 && left < FOCUS;
+  const isPaused = !run && left > 0 && left < DURATION;
   const primaryLabel = run ? 'Pause' : (isPaused ? 'Resume' : 'Start');
 
   const onPrimaryPress = () => {
-    if (isFinished) { setLeft(FOCUS); setRun(true); setHasBeeped(false); return; }
+    // If finished:
+    if (isFinished) {
+      if (mode === 'break') {
+        // start a brand-new Focus cycle
+        setMode('focus');
+        setLeft(FOCUS_SECS);
+        setRun(true);
+        setHasBeeped(false);
+      } else {
+        // finished Focus normally flips to Break (we already did it above and paused)
+        // here, if user presses Start while at 00:00 in Focus (rare), begin Break
+        setMode('break');
+        setLeft(BREAK_SECS);
+        setRun(true);
+        setHasBeeped(false);
+      }
+      return;
+    }
+    // Toggle running
     setRun((p) => !p);
   };
+
+  // Cancel:
+  // - In Focus: reset Focus to full and pause (same as before)
+  // - In Break: jump back to Focus full and pause (your change #4)
+  const onCancel = () => {
+    if (mode === 'break') {
+      setMode('focus');
+      setRun(false);
+      setLeft(FOCUS_SECS);
+      setHasBeeped(false);
+    } else {
+      setRun(false);
+      setLeft(FOCUS_SECS);
+      setHasBeeped(false);
+    }
+  };
+
+  // 🎨 colors per mode (ring + dot stroke + primary/Cancel button, and chips)
+  const ACCENT = mode === 'focus' ? FOCUS_COLOR : BREAK_COLOR;
+  const ACCENT_BG = mode === 'focus' ? FOCUS_BG : BREAK_BG;
+  const CHIP_BG = mode === 'focus' ? FOCUS_CHIP_BG : BREAK_CHIP_BG;
+  const CHIP_TEXT = mode === 'focus' ? FOCUS_CHIP_TEXT : BREAK_CHIP_TEXT;
 
   /* ───────────────────────────── render ──────────────────────────────── */
   return (
@@ -161,9 +236,19 @@ export default function TimerScreen() {
               <TouchableOpacity
                 onPress={() => setTask(item)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={[styles.chip, active && styles.chipActive]}
+                style={[
+                  styles.chip,
+                  { backgroundColor: CHIP_BG },           // base tint varies by mode (#2)
+                  active && { backgroundColor: ACCENT },  // active chip matches ring color
+                ]}
               >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    { color: CHIP_TEXT },                  // base text by mode
+                    active && styles.chipTextActive,       // white when active
+                  ]}
+                >
                   {item.title}
                 </Text>
               </TouchableOpacity>
@@ -172,16 +257,21 @@ export default function TimerScreen() {
         />
       ) : null}
 
-      {/* circular timer (your original look) */}
+      {/* small header for context (optional) */}
+      <Text style={{ marginTop: 8, color: '#666', fontWeight: '600' }}>
+        {mode === 'focus' ? 'Focus' : 'Break'}
+      </Text>
+
+      {/* circular timer */}
       <View style={[styles.svgWrapper, { width: SIZE, height: SIZE }]}>
         <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
           <G rotation="-90" origin={`${CENTER}, ${CENTER}`}>
-            {/* base ring (teal) */}
+            {/* base ring (accent) */}
             <Circle
               cx={CENTER}
               cy={CENTER}
               r={RADIUS}
-              stroke="#23766D"
+              stroke={ACCENT}
               strokeWidth={RING_STROKE}
               fill="none"
             />
@@ -201,7 +291,7 @@ export default function TimerScreen() {
             <AnimatedCircle
               r={DOT_RADIUS}
               fill="#fff"
-              stroke="#23766D"
+              stroke={ACCENT}
               strokeWidth={2}
               animatedProps={dotProps}
             />
@@ -214,14 +304,12 @@ export default function TimerScreen() {
 
       {/* controls */}
       <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={styles.startBtn}
-          onPress={() => { setRun(false); setLeft(FOCUS); setHasBeeped(false); }}
-        >
+        {/* #3: Cancel uses the same color as Start */}
+        <TouchableOpacity style={[styles.startBtn, { backgroundColor: ACCENT_BG }]} onPress={onCancel}>
           <Text style={styles.startText}>Cancel</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.startBtn} onPress={onPrimaryPress}>
+        <TouchableOpacity style={[styles.startBtn, { backgroundColor: ACCENT_BG }]} onPress={onPrimaryPress}>
           <Text style={styles.startText}>{primaryLabel}</Text>
         </TouchableOpacity>
       </View>
