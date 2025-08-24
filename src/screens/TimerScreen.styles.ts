@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { COLORS } from '../constants/colors';
 
 export const RING_STROKE  = 8;       // width of the progress ring
 export const DOT_RADIUS   = 13;      // visible handle
@@ -23,7 +24,7 @@ export const BREAK_CHIP_TEXT = '#6B5B95'; // chip text in break
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

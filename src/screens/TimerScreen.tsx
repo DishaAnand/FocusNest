@@ -10,6 +10,8 @@ import Animated, {
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import Sound from 'react-native-sound';
+import { addSessionSeconds } from '../storage/progressStore';
+import { appendSession } from '../storage/sessionStore';
 
 type Task = { id: string; title: string; icon: string };
 type RootStackParamList = {
@@ -139,12 +141,16 @@ export default function TimerScreen() {
 
     if (mode === 'focus') {
       // move to Break, but do NOT autostart
+      addSessionSeconds('focus', FOCUS_SECS);
+      appendSession('focus', FOCUS_SECS);
       setMode('break');
       setLeft(BREAK_SECS);
       setRun(false);
       setHasBeeped(false);
     } else {
       // finished Break: stop at 00:00 (user can Start to begin new Focus)
+      addSessionSeconds('break', BREAK_SECS);   
+      appendSession('focus', FOCUS_SECS);
       setRun(false);
       // remain in break with left=0
     }
