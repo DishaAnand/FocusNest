@@ -1,5 +1,6 @@
+// screens/TimerScreen.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, DeviceEventEmitter } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -10,7 +11,8 @@ import Animated, {
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import Sound from 'react-native-sound';
-import { addSessionSeconds } from '../storage/progressStore';
+
+import { addSessionSeconds, PROGRESS_UPDATED_EVENT } from '../storage/progressStore';
 import { appendSession } from '../storage/sessionStore';
 
 type Task = { id: string; title: string; icon: string };
@@ -40,9 +42,9 @@ import {
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-// ⏱ durations
-const FOCUS_SECS = 1 * 60;      // keep your 1:00 focus for testing
-const BREAK_SECS = 1 * 60;      // 5:00 break
+// ⏱ durations (keep your testing values)
+const FOCUS_SECS = 1 * 60;
+const BREAK_SECS = 1 * 60;
 
 type Mode = 'focus' | 'break';
 
@@ -73,7 +75,7 @@ export default function TimerScreen() {
   const [hasBeeped, setHasBeeped] = useState(false);
 
   useEffect(() => {
-    Sound.setCategory('Playback'); // iOS: play with silent switch
+    Sound.setCategory('Playback'); // iOS: allow playback with silent switch
     const s = new Sound('beep-alarm-366507.mp3', Sound.MAIN_BUNDLE, (err) => {
       if (err) console.warn('Sound load error', err);
     });
@@ -134,25 +136,32 @@ export default function TimerScreen() {
   }, [run]);
 
   // 🔁 Phase transitions:
-  // Focus → Break: DO NOT autostart (your change #1)
+  // Focus → Break (do NOT autostart break)
   // Break → stop at 00:00; user decides next step
   useEffect(() => {
     if (left !== 0 || !hasBeeped) return;
 
+    const now = new Date();
+
     if (mode === 'focus') {
-      // move to Break, but do NOT autostart
-      addSessionSeconds('focus', FOCUS_SECS);
+      // ✅ Log focus totals + a completed focus session
+      addSessionSeconds('focus', FOCUS_SECS, now)
+        .finally(() => DeviceEventEmitter.emit(PROGRESS_UPDATED_EVENT));
+      // if your session store logs only focus sessions:
       appendSession('focus', FOCUS_SECS);
+
+      // move to Break, but do NOT autostart
       setMode('break');
       setLeft(BREAK_SECS);
       setRun(false);
       setHasBeeped(false);
     } else {
-      // finished Break: stop at 00:00 (user can Start to begin new Focus)
-      addSessionSeconds('break', BREAK_SECS);   
-      appendSession('focus', FOCUS_SECS);
+      // finished Break: update totals, no session log for break
+      addSessionSeconds('break', BREAK_SECS, now)
+        .finally(() => DeviceEventEmitter.emit(PROGRESS_UPDATED_EVENT));
+
+      // remain in break with left=0; user can start focus again
       setRun(false);
-      // remain in break with left=0
     }
   }, [left, hasBeeped, mode]);
 
@@ -189,8 +198,7 @@ export default function TimerScreen() {
         setRun(true);
         setHasBeeped(false);
       } else {
-        // finished Focus normally flips to Break (we already did it above and paused)
-        // here, if user presses Start while at 00:00 in Focus (rare), begin Break
+        // finished Focus; begin Break if user taps Start right at 00:00
         setMode('break');
         setLeft(BREAK_SECS);
         setRun(true);
@@ -203,8 +211,8 @@ export default function TimerScreen() {
   };
 
   // Cancel:
-  // - In Focus: reset Focus to full and pause (same as before)
-  // - In Break: jump back to Focus full and pause (your change #4)
+  // - In Focus: reset Focus to full and pause
+  // - In Break: jump back to Focus full and pause
   const onCancel = () => {
     if (mode === 'break') {
       setMode('focus');
@@ -218,7 +226,7 @@ export default function TimerScreen() {
     }
   };
 
-  // 🎨 colors per mode (ring + dot stroke + primary/Cancel button, and chips)
+  // 🎨 colors per mode
   const ACCENT = mode === 'focus' ? FOCUS_COLOR : BREAK_COLOR;
   const ACCENT_BG = mode === 'focus' ? FOCUS_BG : BREAK_BG;
   const CHIP_BG = mode === 'focus' ? FOCUS_CHIP_BG : BREAK_CHIP_BG;
@@ -244,15 +252,15 @@ export default function TimerScreen() {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 style={[
                   styles.chip,
-                  { backgroundColor: CHIP_BG },           // base tint varies by mode (#2)
-                  active && { backgroundColor: ACCENT },  // active chip matches ring color
+                  { backgroundColor: CHIP_BG },
+                  active && { backgroundColor: ACCENT },
                 ]}
               >
                 <Text
                   style={[
                     styles.chipText,
-                    { color: CHIP_TEXT },                  // base text by mode
-                    active && styles.chipTextActive,       // white when active
+                    { color: CHIP_TEXT },
+                    active && styles.chipTextActive,
                   ]}
                 >
                   {item.title}
@@ -263,7 +271,7 @@ export default function TimerScreen() {
         />
       ) : null}
 
-      {/* small header for context (optional) */}
+      {/* small header for context */}
       <Text style={{ marginTop: 8, color: '#666', fontWeight: '600' }}>
         {mode === 'focus' ? 'Focus' : 'Break'}
       </Text>
@@ -310,7 +318,6 @@ export default function TimerScreen() {
 
       {/* controls */}
       <View style={styles.buttonRow}>
-        {/* #3: Cancel uses the same color as Start */}
         <TouchableOpacity style={[styles.startBtn, { backgroundColor: ACCENT_BG }]} onPress={onCancel}>
           <Text style={styles.startText}>Cancel</Text>
         </TouchableOpacity>
