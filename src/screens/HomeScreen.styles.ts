@@ -61,4 +61,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 10,
   },
+  headerIconBtn: {
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+  borderRadius: 10,
+},
 });

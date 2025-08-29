@@ -67,7 +67,7 @@ export default function SingleDayBarChart({
     setH(Math.max(240, Math.min(360, Math.round(width * 0.75))));
   };
 
-  const mins = Math.max(0, Math.round(minutes));
+  const mins = Math.max(0, Math.floor(minutes)); // floor, don’t round up
   const scale = useMemo(() => makeScale(mins, h), [mins, h]);
 
   // geometry
@@ -75,7 +75,7 @@ export default function SingleDayBarChart({
   const barW = Math.min(90, Math.max(54, Math.round(innerW * 0.22)));
   const barCenter = Math.round(w / 2);
   const barX = PAD_L + Math.round((innerW - barW) / 2);
-  const barH = Math.max(4, (h - PAD_T - PAD_B) * (mins / Math.max(1, scale.top)));
+  const barH = mins > 0 ? Math.max(4, (h - PAD_T - PAD_B) * (mins / Math.max(1, scale.top))) : 0;
   const barY = h - PAD_B - barH; // top of bar (y)
 
   // path for a rectangle with ONLY top corners rounded (bottom flat)
@@ -133,14 +133,14 @@ export default function SingleDayBarChart({
 
           {/* soft halo box (keeps bottom flat, not rounded) */}
           <Rect
-            x={barX - 10}
-            y={barY - 10}
-            width={barW + 20}
-            height={barH + 20}
+            x={barX - 6}
+            y={barY - 6}
+            width={barW + 12}
+            height={barH + 12}
             fill={color}
-            opacity={0.06}
-            rx={0}
-            ry={0}
+            opacity={0.08}
+            rx={BAR_RADIUS + 4}
+            ry={BAR_RADIUS + 4}
           />
 
           {/* bar with rounded top only (bottom is flat on the axis) */}
@@ -148,7 +148,7 @@ export default function SingleDayBarChart({
 
           {/* x-axis label */}
           <SvgText
-            x={barX + barW / 2} 
+            x={barX + barW / 2}
             y={h - 16}
             fontSize={12}
             fill="#0E1A19"

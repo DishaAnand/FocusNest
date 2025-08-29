@@ -41,6 +41,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   activeLabel: {
-    color: 'white',
+    color: '#ffffff',
   },
 });

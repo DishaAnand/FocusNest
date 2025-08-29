@@ -46,13 +46,13 @@ function makeScale(values: number[], height: number) {
   if (padded < 240) {
     const top = roundUp(padded, 30);
     const ticks: number[] = []; for (let v = 0; v <= top; v += 30) ticks.push(v);
-    return { top, ticks, format: (v: number) => (v % 60 === 0 ? `${v/60}h` : ''), y: toY(top), hybrid: true };
+    return { top, ticks, format: (v: number) => (v % 60 === 0 ? `${v / 60}h` : ''), y: toY(top), hybrid: true };
   }
   const topH = Math.max(4, Math.ceil(padded / 60));
   const stepH = topH >= 10 ? 2 : 1;
   const top = topH * 60;
   const ticks: number[] = []; for (let h = 0; h <= topH; h += stepH) ticks.push(h * 60);
-  return { top, ticks, format: (v: number) => `${v/60}h`, y: toY(top), hybrid: false };
+  return { top, ticks, format: (v: number) => `${v / 60}h`, y: toY(top), hybrid: false };
 }
 
 export default function WeeklyFocusChart({
@@ -70,7 +70,7 @@ export default function WeeklyFocusChart({
     setH(Math.max(240, Math.min(360, Math.round(width * 0.72))));
   };
 
-  const focusValues = data.map(d => Math.max(0, Math.round(d.focusMin)));
+  const focusValues = data.map(d => Math.max(0, Math.floor(d.focusMin)));
   const scale = useMemo(() => makeScale(focusValues, h), [focusValues, h]);
 
   const innerW = Math.max(0, w - PAD_L - PAD_R);
@@ -127,7 +127,9 @@ export default function WeeklyFocusChart({
           <G>
             {data.map((d, idx) => {
               const x = startX + idx * (barW + gap);
-              const focusH = Math.max(BAR_MIN, (h - PAD_T - PAD_B) * (d.focusMin / Math.max(1, scale.top)));
+              const value = Math.max(0, Math.floor(d.focusMin));
+              const focusH = value > 0 ? Math.max(BAR_MIN, (h - PAD_T - PAD_B) * (value / Math.max(1, scale.top))) : 0;
+
               const focusTopY = h - PAD_B - focusH;
 
               const isToday = todayISO && d.date === todayISO;

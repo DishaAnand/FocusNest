@@ -51,6 +51,9 @@ export async function getSessionStatsInRange(start: Date, end: Date) {
 
   return { sessionsCompleted, avgSession, longestSession };
 }
+export async function clearAllSessions() {
+  await AsyncStorage.removeItem('focusnest:sessions:v1'); // <- use your real key
+}
 
 export async function clearSessions() {
   await AsyncStorage.removeItem(KEY);

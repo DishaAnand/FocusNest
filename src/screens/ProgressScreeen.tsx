@@ -4,15 +4,18 @@ import { View, Text, Pressable, ScrollView, useWindowDimensions } from 'react-na
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './ProgressScreen.styles';
 import SegmentedTabs from '../components/SegmentedTabs';
-import BarChart from '../components/BarChart';
 import SingleDayBarChart from '../components/SingleDayBarChart';
-import WeeklyFocusChart from '../components/WeeklyStackedChart';      // ⬅️ focus-only weekly
+import WeeklyFocusChart from '../components/WeeklyStackedChart';
 import MonthlyFocusChart from '../components/MonthlyFocusChart';
 import StatsList from '../components/StatsList';
 import { useProgress } from '../hooks/useProgress';
 import { toISODate } from '../utils/date';
+import { secsToWholeMinutes } from '../utils/time';
+import { clearAllProgress } from '../storage/progressStore';
+import { clearAllSessions } from '../storage/sessionStore';
 
-const fmtHM = (s: number) => `${Math.floor(s / 60)} min`;
+// helper: floor seconds → whole minutes (never negative)
+const toWholeMinutes = (sec: number) => Math.max(0, Math.floor(sec / 60));
 
 export default function ProgressScreen() {
   const {
@@ -54,7 +57,7 @@ export default function ProgressScreen() {
             style={{
               borderRadius: 18,
               padding: 6,
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#f0e8e8ff',
               shadowColor: '#000',
               shadowOpacity: 0.05,
               shadowRadius: 12,
@@ -89,15 +92,13 @@ export default function ProgressScreen() {
           <View style={styles.cardCol}>
             <Text style={styles.cardLabel}>{overviewHeading}</Text>
             <Text style={styles.subTitle}>Focus</Text>
-            <Text style={styles.big}>{fmtHM(summary.focus)}</Text>
+            <Text style={styles.big}>{toWholeMinutes(summary.focus)} min</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.cardCol}>
             <Text style={styles.cardLabelHidden}>.</Text>
             <Text style={styles.subTitle}>Break</Text>
-            <Text style={styles.big}>
-              {summary.break < 60 ? `${Math.max(0, Math.round(summary.break / 60))}m` : fmtHM(summary.break)}
-            </Text>
+            <Text style={styles.big}>{toWholeMinutes(summary.break)} min</Text>
           </View>
         </View>
 
@@ -105,7 +106,7 @@ export default function ProgressScreen() {
         <View style={{ alignSelf: 'center', width: chartWidth, marginTop: 16 }}>
           {mode === 'Daily' ? (
             <SingleDayBarChart
-              minutes={Math.round(summary.focus / 60)} // seconds → minutes
+              minutes={secsToWholeMinutes(summary.focus)} // seconds → minutes (floor)
               label={anchor.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               color="#F46C6C"
             />
@@ -116,7 +117,7 @@ export default function ProgressScreen() {
                 return {
                   date: s.date,
                   label: `${mm}-${dd}`,
-                  focusMin: Math.max(0, Math.round(s.value / 60)), // seconds → minutes
+                  focusMin: secsToWholeMinutes(s.value), // seconds → minutes (floor)
                 };
               })}
               todayISO={toISODate(new Date())}
@@ -124,40 +125,41 @@ export default function ProgressScreen() {
             />
           ) : (
             // MONTHLY → fixed day buckets (01–07, 08–14, 15–21, 22–28, 29–end), focus-only
-            // MONTHLY → fixed month-day buckets starting at 01
             <MonthlyFocusChart
               data={(() => {
                 const year = anchor.getFullYear();
-                const m0 = anchor.getMonth();                       // 0-based month
+                const m0 = anchor.getMonth(); // 0-based
                 const endDay = daysInMonth(year, m0);
 
-                // Define the 5 possible month buckets
+                // Define ranges; clamp final bucket to month end, drop if empty
                 const ranges: Array<{ lo: number; hi: number }> = [
-                  { lo: 1, hi: Math.min(7, endDay) },
-                  { lo: 8, hi: Math.min(14, endDay) },
+                  { lo: 1,  hi: Math.min(7,  endDay) },
+                  { lo: 8,  hi: Math.min(14, endDay) },
                   { lo: 15, hi: Math.min(21, endDay) },
                   { lo: 22, hi: Math.min(28, endDay) },
                   { lo: 29, hi: endDay },
-                ].filter(r => r.lo <= r.hi); // drop last if month ends before 29
+                ].filter(r => r.lo <= r.hi);
 
-                // Initialize totals
+                // Initialize bucket totals (minutes)
                 const totals = ranges.map(() => 0);
 
-                // Accumulate focus MINUTES for each day into its range
+                // Accumulate focus minutes for current month only
                 for (const s of series) {
-                  const [, mm, dd] = s.date.split('-').map(Number); // tz-safe
-                  if (mm !== m0 + 1) continue;                      // keep only current month
-                  const day = dd;
-                  const minutes = Math.max(0, Math.round(s.value / 60)); // seconds → minutes
-                  const idx = ranges.findIndex(r => inRange(day, r.lo, r.hi));
+                  const [, mmStr, ddStr] = s.date.split('-'); // 'YYYY-MM-DD'
+                  const mm = Number(mmStr);
+                  const dd = Number(ddStr);
+                  if (mm !== m0 + 1) continue; // only this month
+                  const minutes = toWholeMinutes(s.value); // seconds → minutes (floor)
+                  const idx = ranges.findIndex(r => inRange(dd, r.lo, r.hi));
                   if (idx >= 0) totals[idx] += minutes;
                 }
 
-                // Build chart buckets
+                // Build chart data
                 return ranges.map((r, i) => {
-                  const startISO = `${year}-${String(m0 + 1).padStart(2, '0')}-${String(r.lo).padStart(2, '0')}`;
-                  const endISO = `${year}-${String(m0 + 1).padStart(2, '0')}-${String(r.hi).padStart(2, '0')}`;
-                  const label = `${String(r.lo).padStart(2, '0')}–${String(r.hi).padStart(2, '0')}`;
+                  const monthISO = String(m0 + 1).padStart(2, '0');
+                  const startISO = `${year}-${monthISO}-${String(r.lo).padStart(2, '0')}`;
+                  const endISO   = `${year}-${monthISO}-${String(r.hi).padStart(2, '0')}`;
+                  const label    = `${String(r.lo).padStart(2, '0')}–${String(r.hi).padStart(2, '0')}`;
                   return {
                     startISO,
                     endISO,
@@ -169,16 +171,37 @@ export default function ProgressScreen() {
               todayISO={toISODate(new Date())}
               focusColor="#F46C6C"
             />
-
           )}
         </View>
 
         {/* Stats */}
         <StatsList
-          sessionsCompleted={stats.sessionsCompleted}
-          avgSessionSec={stats.avgSession}
-          longestSessionSec={stats.longestSession}
+          sessionsCompleted={stats.sessionsCompleted ?? 0}
+          avgSessionSec={(stats.sessionsCompleted ?? 0) > 0 ? (stats.avgSession ?? 0) : 0}
+          longestSessionSec={stats.longestSession ?? 0}
         />
+
+        {/* Debug reset (remove after testing) */}
+        <Pressable
+          onPress={async () => {
+            try {
+              await clearAllProgress();   // wipe daily focus/break seconds
+              await clearAllSessions();   // wipe session list & stats
+            } catch (e) {
+              console.log('Reset error', e);
+            }
+          }}
+          style={{
+            alignSelf: 'center',
+            marginTop: 12,
+            paddingVertical: 8,
+            paddingHorizontal: 14,
+            borderRadius: 10,
+            backgroundColor: '#EEE',
+          }}
+        >
+          <Text style={{ color: '#444', fontWeight: '600' }}>Debug: Reset data</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
