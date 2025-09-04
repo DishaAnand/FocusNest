@@ -1,38 +1,34 @@
 import { StyleSheet } from 'react-native';
+import type { AppColors } from '../theme/theme';
 
 /**
- * Responsive styles
- * - width: drives paddings and radii
- * - topInset: pushes content below notch/status bar
+ * Themed + responsive styles
+ * - colors from ThemeProvider (light/dark/system)
+ * - width/topInset for comfy spacing on any device
  */
-export const createSettingsStyles = (width: number, topInset: number) => {
-  // horizontal padding ~4% of width, min 16 / max 24
+export const createSettingsStyles = (colors: AppColors, width: number, topInset: number) => {
   const hPad = Math.min(24, Math.max(16, Math.round(width * 0.04)));
-  // card radius proportional to width
   const radius = Math.max(14, Math.round(width * 0.045));
-  // vertical spacing scales a bit with width
   const vGap = Math.min(16, Math.max(10, Math.round(width * 0.02)));
 
   return StyleSheet.create({
-    safe: {
-      flex: 1,
-      backgroundColor: '#FCFAF4',
-    },
+    safe: { flex: 1, backgroundColor: colors.bg },
     screen: {
       flex: 1,
-      paddingTop: topInset + 8,   // ← keeps “Settings” comfortably below the notch
+      paddingTop: topInset + 8,
       paddingHorizontal: hPad,
       paddingBottom: 20,
-      backgroundColor: '#FCFAF4',
+      backgroundColor: colors.bg,
     },
     title: {
-      fontSize: Math.round(width * 0.07), // ~28 on 390w
+      fontSize: Math.round(width * 0.07),
       fontWeight: '700',
-      color: '#12202E',
+      color: colors.text,
       marginBottom: vGap - 4,
     },
+
     card: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: colors.card,
       borderRadius: radius,
       paddingHorizontal: hPad - 2,
       paddingVertical: 8,
@@ -44,13 +40,14 @@ export const createSettingsStyles = (width: number, topInset: number) => {
       elevation: 2,
     },
     cardHeader: {
-      fontSize: Math.round(width * 0.035), // ~14
+      fontSize: Math.round(width * 0.035),
       fontWeight: '700',
-      color: '#405261',
+      color: colors.text,
       marginBottom: 6,
       paddingHorizontal: 4,
       paddingTop: 6,
     },
+
     row: {
       minHeight: 48,
       paddingHorizontal: 6,
@@ -59,44 +56,29 @@ export const createSettingsStyles = (width: number, topInset: number) => {
       justifyContent: 'space-between',
     },
     rowLabel: {
-      fontSize: Math.round(width * 0.041), // ~16
-      color: '#152534',
+      fontSize: Math.round(width * 0.041),
+      color: colors.text,
       fontWeight: '500',
     },
     rowRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     rowValue: {
       fontSize: Math.round(width * 0.041),
-      color: '#206B62',
+      color: colors.primary,
       fontWeight: '600',
     },
-    divider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: '#E9ECEF',
-      marginHorizontal: 6,
-    },
-    segment: {
-      flexDirection: 'row',
-      backgroundColor: '#EFF3F6',
-      borderRadius: 10,
-      padding: 2,
-    },
-    segmentBtn: {
-      paddingVertical: 6,
-      paddingHorizontal: 10,
-      borderRadius: 8,
-    },
-    segmentBtnActive: { backgroundColor: '#1A9C8B' },
-    segmentText: {
-      fontSize: Math.round(width * 0.033), // ~13
-      fontWeight: '600',
-      color: '#4B5B68',
-    },
-    segmentTextActive: { color: '#FFFFFF' },
 
-    /* sheet */
+    divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.primaryBg, marginHorizontal: 6 },
+
+    segment: { flexDirection: 'row', backgroundColor: colors.primaryBg, borderRadius: 10, padding: 2 },
+    segmentBtn: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
+    segmentBtnActive: { backgroundColor: colors.primary },
+    segmentText: { fontSize: Math.round(width * 0.033), fontWeight: '600', color: colors.text },
+    segmentTextActive: { color: colors.card },
+
+    /* bottom sheet */
     sheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.25)' },
     sheet: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: colors.card,
       paddingTop: 8,
       paddingBottom: 16,
       paddingHorizontal: hPad,
@@ -105,9 +87,9 @@ export const createSettingsStyles = (width: number, topInset: number) => {
     },
     sheetHandle: {
       alignSelf: 'center',
-      width: 44, height: 5, borderRadius: 3, backgroundColor: '#E0E4E8', marginBottom: 8,
+      width: 44, height: 5, borderRadius: 3, backgroundColor: colors.muted, opacity: 0.3, marginBottom: 8,
     },
-    sheetTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8, color: '#243542' },
+    sheetTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8, color: colors.text },
     sheetItem: {
       height: 48,
       paddingHorizontal: 6,
@@ -115,9 +97,20 @@ export const createSettingsStyles = (width: number, topInset: number) => {
       alignItems: 'center',
       justifyContent: 'space-between',
     },
-    sheetItemText: { fontSize: 16, color: '#22313D' },
-    sheetSep: { height: StyleSheet.hairlineWidth, backgroundColor: '#EEF1F4' },
-    sheetCancel: { marginTop: 12, alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 18 },
-    sheetCancelText: { fontSize: 16, fontWeight: '600', color: '#1A9C8B' },
+    sheetItemText: { fontSize: 16, color: colors.text },
+    sheetSep: { height: StyleSheet.hairlineWidth, backgroundColor: colors.primaryBg },
+    sheetCancel: {
+      marginTop: 12,
+      alignSelf: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 18,
+      backgroundColor: colors.primaryBg,
+      borderRadius: 10,
+    },
+    sheetCancelText: { fontSize: 16, fontWeight: '600', color: colors.text },
+
+    // helpers for inline icon colors from theme when needed by the TSX
+    iconColor: { color: colors.muted },
+    primary: { color: colors.primary },
   });
 };

@@ -1,18 +1,26 @@
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Swipeable } from 'react-native-gesture-handler';
 import { styles } from './TaskCard.styles';
 
 export type TaskCardProps = {
   title: string;
-  onStart?: () => void;                  // called when Start button is pressed
-  onRename?: (newTitle: string) => void; // optional rename
-  onDelete?: () => void;                 // triggered by swipe-to-delete
+  onStart?: () => void;                  // Start button
+  onRename?: (newTitle: string) => void; // kept for compatibility
+  onDelete?: () => void;                 // swipe-to-delete
+  onEditRequest?: () => void;            // tap pencil -> open rename modal
 };
 
-export default function TaskCard({ title, onStart, onDelete }: TaskCardProps) {
+export default function TaskCard({
+  title,
+  onStart,
+  onDelete,
+  onEditRequest,
+}: TaskCardProps) {
   const swipeRef = useRef<Swipeable>(null);
 
+  // your original swipe-to-delete action
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>
@@ -53,13 +61,39 @@ export default function TaskCard({ title, onStart, onDelete }: TaskCardProps) {
             <Text style={styles.title}>{title}</Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.startBtn}
-            onPress={onStart}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.startText}>Start</Text>
-          </TouchableOpacity>
+          {/* Right side: Start + Pencil (inside the same card) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              style={styles.startBtn}
+              onPress={onStart}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.startText}>Start</Text>
+            </TouchableOpacity>
+
+            {onEditRequest && (
+              <TouchableOpacity
+                onPress={onEditRequest}
+                activeOpacity={0.85}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityLabel="Rename task"
+                testID="edit-task"
+                // small, unobtrusive icon button
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: '#E0E0E0',
+                  marginLeft: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="pencil-outline" size={18} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </Swipeable>
     </View>

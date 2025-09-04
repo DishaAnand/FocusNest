@@ -5,30 +5,25 @@ import Animated, { useSharedValue, withTiming, useAnimatedProps, Easing } from '
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import Sound from 'react-native-sound';
+import { getSoundFile } from '../audio/sounds';
 
+// data stores
 import { addSessionSeconds, PROGRESS_UPDATED_EVENT } from '../storage/progressStore';
 import { appendSession } from '../storage/sessionStore';
-
-// ✅ settings (durations + auto-start)
 import {
   getAutoStartBreak,
   getFocusMinutes,
   getBreakMinutes,
+  getSoundKey,
   SETTINGS_CHANGED_EVENT as SETTINGS_EVT,
 } from '../storage/settings';
-
-// ✅ tasks from store (so chips show even without params)
 import { getTasks as loadTasks, TASKS_CHANGED_EVENT, Task } from '../storage/tasks';
-import type { Task as TaskType } from '../storage/tasks'; // type alias if you want
+import type { Task as TaskType } from '../storage/tasks';
 
-type RootStackParamList = {
-  Home: undefined;
-  Timer: { task?: TaskType; tasks?: TaskType[]; autoStart?: boolean };
-};
-type TimerRoute = RouteProp<RootStackParamList, 'Timer'>;
-
+// theme + layout
+import { useAppTheme } from '../theme/ThemeProvider';
 import {
-  styles,
+  createTimerStyles,
   RING_STROKE,
   DOT_RADIUS,
   RADIUS,
@@ -45,22 +40,35 @@ import {
   BREAK_CHIP_TEXT,
 } from './TimerScreen.styles';
 
+// sound catalog
+import { SOUND_OPTIONS } from '../audio/sounds';
+
+type RootStackParamList = {
+  Home: undefined;
+  Timer: { task?: TaskType; tasks?: TaskType[]; autoStart?: boolean };
+};
+type TimerRoute = RouteProp<RootStackParamList, 'Timer'>;
+
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 type Mode = 'focus' | 'break';
 
+
 export default function TimerScreen() {
   const { params } = useRoute<TimerRoute>();
+  const { colors } = useAppTheme();
+  const styles = createTimerStyles(colors);
 
-  /* ── tasks: load from store, merge with params (dedupe) ── */
+  /* ───────────────── tasks: from store or params ───────────────── */
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [task, setTask] = useState<Task | undefined>(undefined);
+  const [task, setTask] = useState<Task | undefined>();
+  const skipNextTaskReset = useRef<boolean>(!!params?.autoStart);
 
   function mergeTasks(a: Task[], b: Task[]): Task[] {
     const map = new Map<string, Task>();
     [...a, ...b].forEach(t => map.set(t.id, t));
     const arr = Array.from(map.values());
     return arr.length ? arr : [{ id: 'other', title: 'Other', icon: 'refresh-outline' }];
-  }
+    }
 
   useEffect(() => {
     let mounted = true;
@@ -83,24 +91,29 @@ export default function TimerScreen() {
     return () => { mounted = false; sub.remove(); };
   }, [params?.task, params?.tasks]);
 
-  /* ── settings-driven durations ── */
+  /* ───────────────── settings-driven durations ───────────────── */
   const [focusSecs, setFocusSecs] = useState(25 * 60);
   const [breakSecs, setBreakSecs] = useState(5 * 60);
-  const [autoStartBreak, setAutoStartBreak] = useState(true);
+  const [autoStartBreak, setAutoStartBreakState] = useState(true);
+
+  // selected sound key
+  const [soundKey, setSoundKeyState] = useState<string>('beep');
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const [fm, bm, asb] = await Promise.all([
+        const [fm, bm, asb, sk] = await Promise.all([
           getFocusMinutes().catch(() => 25),
           getBreakMinutes().catch(() => 5),
           getAutoStartBreak().catch(() => true),
+          getSoundKey().catch(() => 'beep'),
         ]);
         if (!mounted) return;
         setFocusSecs(fm * 60);
         setBreakSecs(bm * 60);
-        setAutoStartBreak(asb);
+        setAutoStartBreakState(asb);
+        setSoundKeyState(sk);
         setLeft(prev => {
           const target = mode === 'focus' ? fm * 60 : bm * 60;
           return (!run || prev === 0 || prev > target) ? target : prev;
@@ -118,7 +131,9 @@ export default function TimerScreen() {
         setBreakSecs(secs);
         if (mode === 'break' && (!run || left > secs)) setLeft(secs);
       } else if (p?.key === 'autoStartBreak') {
-        setAutoStartBreak(!!p.value);
+        setAutoStartBreakState(!!p.value);
+      } else if (p?.key === 'soundKey') {
+        setSoundKeyState(String(p.value));
       }
     });
 
@@ -126,14 +141,13 @@ export default function TimerScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── timer state ── */
+  /* ───────────────── timer state ───────────────── */
   const [mode, setMode] = useState<Mode>('focus');
   const DURATION = mode === 'focus' ? focusSecs : breakSecs;
 
   const [left, setLeft] = useState<number>(DURATION);
   const [run, setRun] = useState<boolean>(false);
 
-  // when mode or durations change, keep left sensible
   useEffect(() => {
     setLeft(prev => {
       const target = DURATION;
@@ -142,18 +156,25 @@ export default function TimerScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, focusSecs, breakSecs]);
 
-  /* ── sound ── */
+  /* ───────────────── sound loading ───────────────── */
   const soundRef = useRef<Sound | null>(null);
   const [hasBeeped, setHasBeeped] = useState(false);
 
-  useEffect(() => {
-    Sound.setCategory('Playback');
-    const s = new Sound('beep-alarm-366507.mp3', Sound.MAIN_BUNDLE, (err) => {
-      if (err) console.warn('Sound load error', err);
-    });
-    soundRef.current = s;
-    return () => { s.release(); soundRef.current = null; };
-  }, []);
+  // (Re)load when soundKey changes
+ useEffect(() => {
+  Sound.setCategory('Playback');
+  soundRef.current?.release();
+  soundRef.current = null;
+
+  const filename = getSoundFile(soundKey); // soundKey comes from settings
+  const s = new Sound(filename, Sound.MAIN_BUNDLE, (err) => {
+    if (err) console.warn('Sound load error', err);
+  });
+
+  soundRef.current = s;
+
+  return () => { s && s.release(); };
+}, [soundKey]);
 
   useEffect(() => {
     if (left === 0 && !hasBeeped) {
@@ -162,7 +183,7 @@ export default function TimerScreen() {
     }
   }, [left, hasBeeped]);
 
-  /* ── auto-start from Home (always starts Focus) ── */
+  /* ───────────────── auto-start from Home ───────────────── */
   useEffect(() => {
     if (params?.autoStart) {
       setMode('focus');
@@ -172,16 +193,24 @@ export default function TimerScreen() {
     }
   }, [params?.autoStart, focusSecs]);
 
-  /* ── task selection resets the current phase only ── */
+  /* ───────────────── task selection resets current phase ───────────────── */
   useEffect(() => {
-    if (!task) return;
-    setRun(false);
-    setLeft(mode === 'focus' ? focusSecs : breakSecs);
-    setHasBeeped(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task?.id]);
+  if (!task) return;
 
-  /* ── animations & ticking ── */
+  // If we navigated with autoStart, ignore the very first reset that happens
+  // when the initial task is set, otherwise it cancels the auto-start.
+  if (skipNextTaskReset.current) {
+    skipNextTaskReset.current = false;
+    return;
+  }
+
+  setRun(false);
+  setLeft(mode === 'focus' ? focusSecs : breakSecs);
+  setHasBeeped(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [task?.id]);
+
+  /* ───────────────── animations & ticking ───────────────── */
   const progress = useSharedValue(0);
   const theta = useSharedValue(0);
 
@@ -204,7 +233,7 @@ export default function TimerScreen() {
     return () => id && clearInterval(id);
   }, [run]);
 
-  /* ── phase transitions ── */
+  /* ───────────────── phase transitions ───────────────── */
   useEffect(() => {
     if (left !== 0 || !hasBeeped) return;
 
@@ -235,7 +264,7 @@ export default function TimerScreen() {
     })();
   }, [left, hasBeeped, mode, focusSecs, breakSecs, autoStartBreak]);
 
-  /* ── helpers ── */
+  /* ───────────────── helpers ───────────────── */
   const mmss = () => {
     const m = Math.floor(left / 60).toString().padStart(2, '0');
     const s = (left % 60).toString().padStart(2, '0');
@@ -285,7 +314,7 @@ export default function TimerScreen() {
     }
   };
 
-  // colors per mode
+  // accent palette per mode
   const ACCENT = mode === 'focus' ? FOCUS_COLOR : BREAK_COLOR;
   const ACCENT_BG = mode === 'focus' ? FOCUS_BG : BREAK_BG;
   const CHIP_BG = mode === 'focus' ? FOCUS_CHIP_BG : BREAK_CHIP_BG;
@@ -329,7 +358,8 @@ export default function TimerScreen() {
         />
       ) : null}
 
-      <Text style={{ marginTop: 8, color: '#666', fontWeight: '600' }}>
+      {/* phase label */}
+      <Text style={[styles.phaseText, { color: colors.muted }]}>
         {mode === 'focus' ? 'Focus' : 'Break'}
       </Text>
 
@@ -342,14 +372,14 @@ export default function TimerScreen() {
               cx={CENTER}
               cy={CENTER}
               r={RADIUS}
-              stroke="#E6E6E6"
+              stroke={colors.primaryBg}
               strokeWidth={RING_STROKE}
               strokeLinecap="round"
               fill="none"
               strokeDasharray={CIRCLE_LEN}
               animatedProps={ringProps}
             />
-            <AnimatedCircle r={DOT_RADIUS} fill="#fff" stroke={ACCENT} strokeWidth={2} animatedProps={dotProps} />
+            <AnimatedCircle r={DOT_RADIUS} fill={colors.card} stroke={ACCENT} strokeWidth={2} animatedProps={dotProps} />
           </G>
         </Svg>
 

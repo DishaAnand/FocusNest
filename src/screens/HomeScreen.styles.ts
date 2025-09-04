@@ -1,69 +1,87 @@
 import { StyleSheet } from 'react-native';
-import { COLORS } from '../constants/colors';
+import type { AppColors } from '../theme/theme';
 
-export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    paddingTop: 50,
-    paddingHorizontal: 20,
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.secondaryLight,
-    borderRadius: 25,
-    justifyContent: 'space-between',
-    padding: 4,
-    marginBottom: 20,
-  },
-  toggleButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  toggleText: {
-    fontSize: 16,
-    color: COLORS.secondaryDark,
-  },
-  activeTab: {
-    backgroundColor: COLORS.primary,
-  },
-  activeText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  listContainer: {
-    paddingBottom: 120,
-  },
-  addButton: {
-    backgroundColor: COLORS.primary,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    position: 'absolute',
-    bottom: 90,
-    right: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    height: 60,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    elevation: 10,
-  },
-  headerIconBtn: {
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-  borderRadius: 10,
-},
-});
+/**
+ * Responsive, themed styles
+ * - top padding considers notch/status bar (topInset) and screen height
+ * - horizontal padding scales with width
+ * - bottom padding keeps content above tab bar & FAB (bottomInset)
+ */
+export const createHomeStyles = (
+  colors: AppColors,
+  width: number,
+  height: number,
+  topInset: number,
+  bottomInset: number
+) => {
+  // horizontal padding ≈ 4% of width (min 16 / max 24)
+  const hPad = Math.min(24, Math.max(16, Math.round(width * 0.04)));
+
+  // base top space: a mix of safe area + small fraction of height
+  // (gives a little breathing room on tall phones; stays tight on short ones)
+  const topSpace = Math.max(topInset + 8, Math.round(height * 0.02));
+
+  // list bottom padding to clear the tab bar + FAB comfortably
+  const bottomSpace = Math.max(24, bottomInset + 96); // ~ tab + extra
+
+  const radius = 12;
+
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      paddingHorizontal: hPad,
+      paddingTop: topSpace,
+    },
+
+    // Toggle
+    toggleContainer: {
+      flexDirection: 'row',
+      backgroundColor: colors.primaryBg,
+      padding: 4,
+      borderRadius: 12,
+      alignSelf: 'center',
+      marginBottom: 12,
+      gap: 6,
+    },
+    toggleButton: {
+      paddingHorizontal: 18,
+      paddingVertical: 8,
+      borderRadius: 10,
+    },
+    toggleText: {
+      fontWeight: '600',
+      color: colors.text,
+    },
+    activeTab: {
+      backgroundColor: colors.primary,
+    },
+    activeText: {
+      color: colors.card,
+    },
+
+    // List
+    listContainer: {
+      paddingBottom: bottomSpace,
+      gap: 10,
+    },
+
+    // FAB
+    addButton: {
+      position: 'absolute',
+      right: hPad,
+      bottom: bottomInset + 24,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primary,
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+    },
+  });
+};

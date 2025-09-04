@@ -14,6 +14,12 @@
 		6D5BB1352E5267A70014F33E /* beep-alarm-366507.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6D5BB1342E5267A70014F33E /* beep-alarm-366507.mp3 */; };
 		6D5BBC272E520E2C00D10639 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D5BBC262E520E2C00D10639 /* AVFoundation.framework */; };
 		6D5BBC292E520E3C00D10639 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D5BBC282E520E3C00D10639 /* AudioToolbox.framework */; };
+		6DF614C32E65EC5B00C2BF60 /* notification-ping-335500.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614C02E65EC5B00C2BF60 /* notification-ping-335500.mp3 */; };
+		6DF614C42E65EC5B00C2BF60 /* school-bell-87744.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614C12E65EC5B00C2BF60 /* school-bell-87744.mp3 */; };
+		6DF614C52E65EC5B00C2BF60 /* bell-chime-238836.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614BD2E65EC5B00C2BF60 /* bell-chime-238836.mp3 */; };
+		6DF614C62E65EC5B00C2BF60 /* tadaa-47995.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614C22E65EC5B00C2BF60 /* tadaa-47995.mp3 */; };
+		6DF614C72E65EC5B00C2BF60 /* happy-210643.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614BF2E65EC5B00C2BF60 /* happy-210643.mp3 */; };
+		6DF614C82E65EC5B00C2BF60 /* cat-meow-12-fx-306191.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614BE2E65EC5B00C2BF60 /* cat-meow-12-fx-306191.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +33,12 @@
 		6D5BB1362E526AEF0014F33E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6D5BBC262E520E2C00D10639 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		6D5BBC282E520E3C00D10639 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		6DF614BD2E65EC5B00C2BF60 /* bell-chime-238836.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "bell-chime-238836.mp3"; sourceTree = "<group>"; };
+		6DF614BE2E65EC5B00C2BF60 /* cat-meow-12-fx-306191.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "cat-meow-12-fx-306191.mp3"; sourceTree = "<group>"; };
+		6DF614BF2E65EC5B00C2BF60 /* happy-210643.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "happy-210643.mp3"; sourceTree = "<group>"; };
+		6DF614C02E65EC5B00C2BF60 /* notification-ping-335500.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "notification-ping-335500.mp3"; sourceTree = "<group>"; };
+		6DF614C12E65EC5B00C2BF60 /* school-bell-87744.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "school-bell-87744.mp3"; sourceTree = "<group>"; };
+		6DF614C22E65EC5B00C2BF60 /* tadaa-47995.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "tadaa-47995.mp3"; sourceTree = "<group>"; };
 		7991D270FC8DBFAD51C8A6AD /* Pods-FocusNest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusNest.release.xcconfig"; path = "Target Support Files/Pods-FocusNest/Pods-FocusNest.release.xcconfig"; sourceTree = "<group>"; };
 		EC31D7C8E3782B96BE8D870F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -74,6 +86,12 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				6DF614BD2E65EC5B00C2BF60 /* bell-chime-238836.mp3 */,
+				6DF614BE2E65EC5B00C2BF60 /* cat-meow-12-fx-306191.mp3 */,
+				6DF614BF2E65EC5B00C2BF60 /* happy-210643.mp3 */,
+				6DF614C02E65EC5B00C2BF60 /* notification-ping-335500.mp3 */,
+				6DF614C12E65EC5B00C2BF60 /* school-bell-87744.mp3 */,
+				6DF614C22E65EC5B00C2BF60 /* tadaa-47995.mp3 */,
 				6D435E0F2E52A107003B802D /* AppDelegate.h */,
 				6D435E0B2E529F7D003B802D /* AppDelegate.mm */,
 				6D435E082E52907C003B802D /* main.m */,
@@ -169,6 +187,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				6D5BB1352E5267A70014F33E /* beep-alarm-366507.mp3 in Resources */,
+				6DF614C32E65EC5B00C2BF60 /* notification-ping-335500.mp3 in Resources */,
+				6DF614C42E65EC5B00C2BF60 /* school-bell-87744.mp3 in Resources */,
+				6DF614C52E65EC5B00C2BF60 /* bell-chime-238836.mp3 in Resources */,
+				6DF614C62E65EC5B00C2BF60 /* tadaa-47995.mp3 in Resources */,
+				6DF614C72E65EC5B00C2BF60 /* happy-210643.mp3 in Resources */,
+				6DF614C82E65EC5B00C2BF60 /* cat-meow-12-fx-306191.mp3 in Resources */,
 				51D6A2B80A7CE8A239A6F546 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -222,9 +246,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-FocusNest/Pods-FocusNest-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-FocusNest/Pods-FocusNest-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -239,9 +267,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-FocusNest/Pods-FocusNest-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-FocusNest/Pods-FocusNest-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -389,10 +421,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -462,10 +491,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

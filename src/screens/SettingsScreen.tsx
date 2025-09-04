@@ -1,4 +1,3 @@
-// src/screens/SettingsScreen.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -14,9 +13,12 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useWindowDimensions } from 'react-native';
+
+// theme + styles
+import { useAppTheme } from '../theme/ThemeProvider';
 import { createSettingsStyles } from './SettingsScreen.styles';
 
-// persistence helpers
+// storage helpers
 import {
   getAutoStartBreak,
   setAutoStartBreak,
@@ -24,64 +26,65 @@ import {
   setFocusMinutes,
   getBreakMinutes,
   setBreakMinutes,
+  getAppearanceMode,
+  setAppearanceMode,
+  getSoundKey,
+  setSoundKey,
+  type AppearanceMode,
 } from '../storage/settings';
 
-type AppearanceMode = 'light' | 'dark' | 'system';
+// sound catalog
+import { SOUND_OPTIONS } from '../audio/sounds';
+
 const DURATIONS_MIN = [1, 5, 10, 15, 20, 25, 30, 35, 45, 50, 60];
-const SOUNDS = ['Chimes', 'Bell', 'Soft Ping', 'Wood Block', 'None'];
 
 const SettingsScreen = () => {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const styles = createSettingsStyles(width, insets.top);
+  const { colors, mode, setMode } = useAppTheme();
+  const styles = createSettingsStyles(colors, width, insets.top);
 
   // persisted settings
-  const [focusMin, setFocusMin] = useState<number>(25);
-  const [breakMin, setBreakMin] = useState<number>(5);
+  const [focusMin, setFocusMinState] = useState<number>(25);
+  const [breakMin, setBreakMinState] = useState<number>(5);
   const [autoStartBreak, setAutoStartBreakState] = useState<boolean>(true);
+  const [appearance, setAppearance] = useState<AppearanceMode>(mode);
+  const [soundKey, setSoundKeyState] = useState<string>('beep');
 
-  // local UI prefs (wire later if you want)
-  const [appearance, setAppearance] = useState<AppearanceMode>('light');
+  // local-only for now
   const [dailyReminder, setDailyReminder] = useState<boolean>(true);
-  const [sound, setSound] = useState<string>('Chimes');
 
-  // pickers
   const [pickerVisible, setPickerVisible] =
     useState<null | 'focus' | 'break' | 'sound'>(null);
 
-  // load persisted settings on mount
+  // load persisted values on mount
   useEffect(() => {
     (async () => {
       try {
-        const [fm, bm, asb] = await Promise.all([
+        const [fm, bm, asb, ap, sk] = await Promise.all([
           getFocusMinutes().catch(() => 25),
           getBreakMinutes().catch(() => 5),
           getAutoStartBreak().catch(() => true),
+          getAppearanceMode().catch(() => 'system' as AppearanceMode),
+          getSoundKey().catch(() => 'beep'),
         ]);
-        setFocusMin(fm);
-        setBreakMin(bm);
+        setFocusMinState(fm);
+        setBreakMinState(bm);
         setAutoStartBreakState(asb);
-      } catch {
-        // noop
-      }
+        setAppearance(ap);
+        setSoundKeyState(sk);
+      } catch {}
     })();
   }, []);
 
   const minutesLabel = (m: number) => `${m} min`;
-
   const onShare = async () => {
-    try {
-      await Share.share({
-        message: 'Focus 25 — a clean Pomodoro timer I’m using. Try it!',
-      });
-    } catch {}
+    try { await Share.share({ message: 'Focus 25 — a clean Pomodoro timer I’m using. Try it!' }); } catch {}
   };
-
   const onRate = () => {
-    const url =
-      Platform.OS === 'ios'
-        ? 'itms-apps://itunes.apple.com/app/id0000000?action=write-review'
-        : 'market://details?id=com.yourapp.bundle';
+    const url = Platform.OS === 'ios'
+      ? 'itms-apps://itunes.apple.com/app/id0000000?action=write-review'
+      : 'market://details?id=com.yourapp.bundle';
     Linking.openURL(url).catch(() => {});
   };
 
@@ -116,9 +119,7 @@ const SettingsScreen = () => {
             value={autoStartBreak}
             onValueChange={async (v) => {
               setAutoStartBreakState(v);
-              try {
-                await setAutoStartBreak(v);
-              } catch {}
+              try { await setAutoStartBreak(v); } catch {}
             }}
           />
         </Card>
@@ -131,7 +132,13 @@ const SettingsScreen = () => {
             styles={styles}
             label="Appearance"
             value={appearance}
-            onChange={setAppearance}
+            onChange={async (m: AppearanceMode) => {
+              setAppearance(m);
+              try {
+                await setAppearanceMode(m); // persist + notify
+                await setMode(m);           // switch theme now
+              } catch {}
+            }}
             options={[
               { key: 'light', label: 'Light' },
               { key: 'dark', label: 'Dark' },
@@ -151,7 +158,7 @@ const SettingsScreen = () => {
           <Row
             styles={styles}
             label="Sound"
-            value={sound}
+            value={SOUND_OPTIONS.find(s => s.key === soundKey)?.label ?? 'Beep'}
             onPress={() => setPickerVisible('sound')}
           />
         </Card>
@@ -161,14 +168,14 @@ const SettingsScreen = () => {
           <Row
             styles={styles}
             label="Share App"
-            right={<Ionicons name="chevron-forward" size={18} color="#5B6B7A" />}
+            right={<Ionicons name="chevron-forward" size={18} color={colors.muted} />}
             onPress={onShare}
           />
           <Divider styles={styles} />
           <Row
             styles={styles}
             label="Rate App"
-            right={<Ionicons name="chevron-forward" size={18} color="#5B6B7A" />}
+            right={<Ionicons name="chevron-forward" size={18} color={colors.muted} />}
             onPress={onRate}
           />
           <Divider styles={styles} />
@@ -176,58 +183,49 @@ const SettingsScreen = () => {
         </Card>
       </View>
 
-      {/* Focus Duration picker */}
+      {/* Focus Duration */}
       <OptionSheet
         styles={styles}
         title="Focus Duration"
         visible={pickerVisible === 'focus'}
-        options={DURATIONS_MIN.map((m) => ({
-          key: String(m),
-          label: minutesLabel(m),
-        }))}
+        options={DURATIONS_MIN.map((m) => ({ key: String(m), label: minutesLabel(m) }))}
         selectedKey={String(focusMin)}
         onClose={() => setPickerVisible(null)}
         onSelect={async (k) => {
           const m = Number(k);
-          setFocusMin(m);
-          try {
-            await setFocusMinutes(m);
-          } catch {}
+          setFocusMinState(m);
+          try { await setFocusMinutes(m); } catch {}
           setPickerVisible(null);
         }}
       />
 
-      {/* Break Duration picker */}
+      {/* Break Duration */}
       <OptionSheet
         styles={styles}
         title="Break Duration"
         visible={pickerVisible === 'break'}
-        options={DURATIONS_MIN.map((m) => ({
-          key: String(m),
-          label: minutesLabel(m),
-        }))}
+        options={DURATIONS_MIN.map((m) => ({ key: String(m), label: minutesLabel(m) }))}
         selectedKey={String(breakMin)}
         onClose={() => setPickerVisible(null)}
         onSelect={async (k) => {
           const m = Number(k);
-          setBreakMin(m);
-          try {
-            await setBreakMinutes(m);
-          } catch {}
+          setBreakMinState(m);
+          try { await setBreakMinutes(m); } catch {}
           setPickerVisible(null);
         }}
       />
 
-      {/* Sound picker (local only for now) */}
+      {/* Sound */}
       <OptionSheet
         styles={styles}
         title="Sound"
         visible={pickerVisible === 'sound'}
-        options={SOUNDS.map((s) => ({ key: s, label: s }))}
-        selectedKey={sound}
+        options={SOUND_OPTIONS.map(s => ({ key: s.key, label: s.label }))}
+        selectedKey={soundKey}
         onClose={() => setPickerVisible(null)}
-        onSelect={(k) => {
-          setSound(k);
+        onSelect={async (k) => {
+          setSoundKeyState(k);
+          try { await setSoundKey(k); } catch {}
           setPickerVisible(null);
         }}
       />
@@ -237,29 +235,17 @@ const SettingsScreen = () => {
 
 export default SettingsScreen;
 
-/* ========================= Tiny UI pieces ========================= */
+/* ---------- tiny UI pieces ---------- */
+const Card: React.FC<{ children: React.ReactNode; styles: any }> = ({ children, styles }) =>
+  <View style={styles.card}>{children}</View>;
 
-const Card: React.FC<{ children: React.ReactNode; styles: any }> = ({
-  children,
-  styles,
-}) => <View style={styles.card}>{children}</View>;
+const CardHeader: React.FC<{ children: React.ReactNode; styles: any }> = ({ children, styles }) =>
+  <Text style={styles.cardHeader}>{children}</Text>;
 
-const CardHeader: React.FC<{ children: React.ReactNode; styles: any }> = ({
-  children,
-  styles,
-}) => <Text style={styles.cardHeader}>{children}</Text>;
-
-const Divider: React.FC<{ styles: any }> = ({ styles }) => (
-  <View style={styles.divider} />
-);
+const Divider: React.FC<{ styles: any }> = ({ styles }) => <View style={styles.divider} />;
 
 const Row: React.FC<{
-  styles: any;
-  label: string;
-  value?: string;
-  right?: React.ReactNode;
-  onPress?: () => void;
-  disabled?: boolean;
+  styles: any; label: string; value?: string; right?: React.ReactNode; onPress?: () => void; disabled?: boolean;
 }> = ({ styles, label, value, right, onPress, disabled }) => (
   <Pressable
     onPress={onPress}
@@ -273,16 +259,13 @@ const Row: React.FC<{
     <Text style={styles.rowLabel}>{label}</Text>
     <View style={styles.rowRight}>
       {!!value && <Text style={styles.rowValue}>{value}</Text>}
-      {right ?? <Ionicons name="chevron-forward" size={18} color="#5B6B7A" />}
+      {right ?? <Ionicons name="chevron-forward" size={18} color={styles.iconColor?.color ?? '#888'} />}
     </View>
   </Pressable>
 );
 
 const ToggleRow: React.FC<{
-  styles: any;
-  label: string;
-  value: boolean;
-  onValueChange: (v: boolean) => void;
+  styles: any; label: string; value: boolean; onValueChange: (v: boolean) => void;
 }> = ({ styles, label, value, onValueChange }) => (
   <View style={styles.row}>
     <Text style={styles.rowLabel}>{label}</Text>
@@ -291,11 +274,7 @@ const ToggleRow: React.FC<{
 );
 
 const SegmentRow: React.FC<{
-  styles: any;
-  label: string;
-  value: string;
-  onChange: (k: any) => void;
-  options: { key: string; label: string }[];
+  styles: any; label: string; value: string; onChange: (k: any) => void; options: { key: string; label: string }[];
 }> = ({ styles, label, value, onChange, options }) => (
   <View style={styles.row}>
     <Text style={styles.rowLabel}>{label}</Text>
@@ -312,9 +291,7 @@ const SegmentRow: React.FC<{
               pressed && { opacity: 0.9 },
             ]}
           >
-            <Text
-              style={[styles.segmentText, selected && styles.segmentTextActive]}
-            >
+            <Text style={[styles.segmentText, selected && styles.segmentTextActive]}>
               {opt.label}
             </Text>
           </Pressable>
@@ -325,13 +302,8 @@ const SegmentRow: React.FC<{
 );
 
 const OptionSheet: React.FC<{
-  styles: any;
-  title: string;
-  visible: boolean;
-  options: { key: string; label: string }[];
-  selectedKey?: string;
-  onClose: () => void;
-  onSelect: (key: string) => void;
+  styles: any; title: string; visible: boolean; options: { key: string; label: string }[];
+  selectedKey?: string; onClose: () => void; onSelect: (key: string) => void;
 }> = ({ styles, title, visible, options, selectedKey, onClose, onSelect }) => (
   <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
     <Pressable style={styles.sheetBackdrop} onPress={onClose} />
@@ -352,7 +324,7 @@ const OptionSheet: React.FC<{
               ]}
             >
               <Text style={styles.sheetItemText}>{item.label}</Text>
-              {sel && <Ionicons name="checkmark" size={18} color="#0B8C7A" />}
+              {sel && <Ionicons name="checkmark" size={18} color={styles.primary?.color ?? '#0B8C7A'} />}
             </Pressable>
           );
         }}

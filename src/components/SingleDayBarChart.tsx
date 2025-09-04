@@ -1,6 +1,6 @@
 // components/SingleDayBarChart.tsx
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
 import Svg, {
   G,
   Line,
@@ -8,19 +8,21 @@ import Svg, {
   Defs,
   LinearGradient,
   Stop,
-  Rect,
   Path,
+  Rect,
 } from 'react-native-svg';
 
 type Props = {
-  minutes: number;   // focus minutes for the selected day
-  label: string;     // x-axis label (e.g., "Aug 24")
-  color?: string;    // bar color
+  minutes: number;          // focus minutes for the selected day
+  label: string;            // x-axis label (e.g., "Aug 24")
+  color?: string;           // bar color
+  isToday?: boolean;        // <-- NEW: show halo only when true
 };
 
 const PAD_L = 48, PAD_R = 14, PAD_T = 12, PAD_B = 44;
 const TICK_TEXT_SIZE = 11;
-const BAR_RADIUS = 12;
+const BAR_RADIUS = 10;      // matches WeeklyFocusChart vibe
+const BAR_MIN = 2;
 
 const roundUp = (n: number, step: number) => Math.ceil(n / step) * step;
 
@@ -29,21 +31,18 @@ function makeScale(mins: number, height: number) {
   const toY = (top: number) =>
     (v: number) => PAD_T + (height - PAD_T - PAD_B) * (1 - v / top);
 
-  // < 90m → minutes with 15m ticks
   if (padded < 90) {
     const top = Math.max(60, roundUp(padded, 10));
     const ticks: number[] = [];
     for (let v = 0; v <= top; v += 15) ticks.push(v);
     return { top, ticks, format: (v: number) => `${v}m`, y: toY(top), hybrid: false };
   }
-  // 90–240m → hybrid: 30m grid, hour labels
   if (padded < 240) {
     const top = roundUp(padded, 30);
     const ticks: number[] = [];
     for (let v = 0; v <= top; v += 30) ticks.push(v);
     return { top, ticks, format: (v: number) => (v % 60 === 0 ? `${v / 60}h` : ''), y: toY(top), hybrid: true };
   }
-  // ≥ 240m → hours, 1h or 2h step
   const topH = Math.max(4, Math.ceil(padded / 60));
   const stepH = topH >= 10 ? 2 : 1;
   const top = topH * 60;
@@ -52,10 +51,27 @@ function makeScale(mins: number, height: number) {
   return { top, ticks, format: (v: number) => `${v / 60}h`, y: toY(top), hybrid: false };
 }
 
+// same rounded-top shape you used in WeeklyFocusChart
+function roundedTopPath(bx: number, topY: number, height: number, width: number) {
+  const hh = Math.max(0, height);
+  if (hh <= 0) return '';
+  const radius = Math.min(BAR_RADIUS, width / 2, hh);
+  return `
+    M ${bx} ${topY + hh}
+    L ${bx} ${topY + radius}
+    Q ${bx} ${topY} ${bx + radius} ${topY}
+    L ${bx + width - radius} ${topY}
+    Q ${bx + width} ${topY} ${bx + width} ${topY + radius}
+    L ${bx + width} ${topY + hh}
+    Z
+  `;
+}
+
 export default function SingleDayBarChart({
   minutes,
   label,
   color = '#F46C6C',
+  isToday = false,
 }: Props) {
   const [w, setW] = useState(0);
   const [h, setH] = useState(300);
@@ -63,31 +79,23 @@ export default function SingleDayBarChart({
   const onLayout = (e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
     setW(width);
-    // responsive height: ~0.75 aspect, clamped 240–360
     setH(Math.max(240, Math.min(360, Math.round(width * 0.75))));
   };
 
-  const mins = Math.max(0, Math.floor(minutes)); // floor, don’t round up
+  const mins = Math.max(0, Math.floor(minutes));
   const scale = useMemo(() => makeScale(mins, h), [mins, h]);
 
   // geometry
   const innerW = Math.max(0, w - PAD_L - PAD_R);
   const barW = Math.min(90, Math.max(54, Math.round(innerW * 0.22)));
-  const barCenter = Math.round(w / 2);
   const barX = PAD_L + Math.round((innerW - barW) / 2);
-  const barH = mins > 0 ? Math.max(4, (h - PAD_T - PAD_B) * (mins / Math.max(1, scale.top))) : 0;
-  const barY = h - PAD_B - barH; // top of bar (y)
 
-  // path for a rectangle with ONLY top corners rounded (bottom flat)
-  const barPathD = `
-    M ${barX} ${barY + barH}
-    L ${barX} ${barY + BAR_RADIUS}
-    Q ${barX} ${barY} ${barX + BAR_RADIUS} ${barY}
-    L ${barX + barW - BAR_RADIUS} ${barY}
-    Q ${barX + barW} ${barY} ${barX + barW} ${barY + BAR_RADIUS}
-    L ${barX + barW} ${barY + barH}
-    Z
-  `;
+  // bar height & top
+  const hasBar = mins > 0;
+  const barH = hasBar ? Math.max(BAR_MIN, (h - PAD_T - PAD_B) * (mins / Math.max(1, scale.top))) : 0;
+  const barTopY = h - PAD_B - barH;
+
+  const barPathD = hasBar ? roundedTopPath(barX, barTopY, barH, barW) : '';
 
   return (
     <View style={styles.wrap} onLayout={onLayout}>
@@ -107,22 +115,9 @@ export default function SingleDayBarChart({
               const major = scale.hybrid ? t % 60 === 0 : true;
               return (
                 <G key={`tick-${i}`}>
-                  <Line
-                    x1={PAD_L}
-                    x2={w - PAD_R}
-                    y1={y}
-                    y2={y}
-                    stroke="#0B0B0B"
-                    opacity={major ? 0.08 : 0.04}
-                  />
+                  <Line x1={PAD_L} x2={w - PAD_R} y1={y} y2={y} stroke="#0B0B0B" opacity={major ? 0.08 : 0.04} />
                   {!!scale.format(t) && (
-                    <SvgText
-                      x={PAD_L - 8}
-                      y={y + 4}
-                      fontSize={TICK_TEXT_SIZE}
-                      fill="#4A5A59"
-                      textAnchor="end"
-                    >
+                    <SvgText x={PAD_L - 8} y={y + 4} fontSize={TICK_TEXT_SIZE} fill="#4A5A59" textAnchor="end">
                       {scale.format(t)}
                     </SvgText>
                   )}
@@ -131,20 +126,22 @@ export default function SingleDayBarChart({
             })}
           </G>
 
-          {/* soft halo box (keeps bottom flat, not rounded) */}
-          <Rect
-            x={barX - 6}
-            y={barY - 6}
-            width={barW + 12}
-            height={barH + 12}
-            fill={color}
-            opacity={0.08}
-            rx={BAR_RADIUS + 4}
-            ry={BAR_RADIUS + 4}
-          />
+          {/* halo — ONLY for today, only if a bar exists */}
+          {hasBar && isToday && (
+            <Rect
+              x={barX - 6}
+              y={barTopY - 6}
+              width={barW + 12}
+              height={barH + 12}
+              fill={color}
+              opacity={0.08}
+              rx={BAR_RADIUS + 4}
+              ry={BAR_RADIUS + 4}
+            />
+          )}
 
-          {/* bar with rounded top only (bottom is flat on the axis) */}
-          <Path d={barPathD} fill="url(#sdb_grad)" />
+          {/* main bar */}
+          {hasBar && <Path d={barPathD} fill="url(#sdb_grad)" />}
 
           {/* x-axis label */}
           <SvgText
@@ -159,15 +156,10 @@ export default function SingleDayBarChart({
           </SvgText>
         </Svg>
       )}
-
-      {/* <Text style={styles.caption}>
-        Single-day focus. Y-axis auto-switches minutes ↔ hours.
-      </Text> */}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { width: '100%', alignItems: 'center', paddingTop: 8 },
-  caption: { marginTop: 8, color: '#6C7A7A', fontSize: 12 },
 });
