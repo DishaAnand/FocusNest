@@ -11,15 +11,16 @@ import Svg, {
   Path,
   Rect,
 } from 'react-native-svg';
+import { useChartColors } from '../theme/useChartColors';
 
 type WeekPoint = {
-  date: string;   // "YYYY-MM-DD"
-  label: string;  // e.g., "08-24"
+  date: string;
+  label: string;
   focusMin: number;
 };
 
 type Props = {
-  data: WeekPoint[];     // 7 items (Sun..Sat)
+  data: WeekPoint[];
   focusColor?: string;
   todayISO?: string;
   anchorISO?: string;
@@ -40,18 +41,27 @@ function makeScale(values: number[], height: number) {
 
   if (padded < 90) {
     const top = Math.max(60, roundUp(padded, 10));
-    const ticks: number[] = []; for (let v = 0; v <= top; v += 15) ticks.push(v);
+    const ticks: number[] = [];
+    for (let v = 0; v <= top; v += 15) ticks.push(v);
     return { top, ticks, format: (v: number) => `${v}m`, y: toY(top), hybrid: false };
   }
   if (padded < 240) {
     const top = roundUp(padded, 30);
-    const ticks: number[] = []; for (let v = 0; v <= top; v += 30) ticks.push(v);
-    return { top, ticks, format: (v: number) => (v % 60 === 0 ? `${v / 60}h` : ''), y: toY(top), hybrid: true };
+    const ticks: number[] = [];
+    for (let v = 0; v <= top; v += 30) ticks.push(v);
+    return {
+      top,
+      ticks,
+      format: (v: number) => (v % 60 === 0 ? `${v / 60}h` : ''),
+      y: toY(top),
+      hybrid: true,
+    };
   }
   const topH = Math.max(4, Math.ceil(padded / 60));
   const stepH = topH >= 10 ? 2 : 1;
   const top = topH * 60;
-  const ticks: number[] = []; for (let h = 0; h <= topH; h += stepH) ticks.push(h * 60);
+  const ticks: number[] = [];
+  for (let h = 0; h <= topH; h += stepH) ticks.push(h * 60);
   return { top, ticks, format: (v: number) => `${v / 60}h`, y: toY(top), hybrid: false };
 }
 
@@ -63,6 +73,9 @@ export default function WeeklyFocusChart({
 }: Props) {
   const [w, setW] = useState(0);
   const [h, setH] = useState(300);
+
+  const { axisLabel, xAxisLabel, gridLine, gridOpacityMajor, gridOpacityMinor } =
+    useChartColors();
 
   const onLayout = (e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
@@ -112,9 +125,22 @@ export default function WeeklyFocusChart({
               const major = scale.hybrid ? t % 60 === 0 : true;
               return (
                 <G key={`tick-${i}`}>
-                  <Line x1={PAD_L} x2={w - PAD_R} y1={y} y2={y} stroke="#0B0B0B" opacity={major ? 0.08 : 0.04} />
+                  <Line
+                    x1={PAD_L}
+                    x2={w - PAD_R}
+                    y1={y}
+                    y2={y}
+                    stroke={gridLine}
+                    opacity={major ? gridOpacityMajor : gridOpacityMinor}
+                  />
                   {!!scale.format(t) && (
-                    <SvgText x={PAD_L - 8} y={y + 4} fontSize={TICK_TEXT_SIZE} fill="#4A5A59" textAnchor="end">
+                    <SvgText
+                      x={PAD_L - 8}
+                      y={y + 4}
+                      fontSize={TICK_TEXT_SIZE}
+                      fill={axisLabel}
+                      textAnchor="end"
+                    >
                       {scale.format(t)}
                     </SvgText>
                   )}
@@ -128,13 +154,14 @@ export default function WeeklyFocusChart({
             {data.map((d, idx) => {
               const x = startX + idx * (barW + gap);
               const value = Math.max(0, Math.floor(d.focusMin));
-              const focusH = value > 0 ? Math.max(BAR_MIN, (h - PAD_T - PAD_B) * (value / Math.max(1, scale.top))) : 0;
+              const focusH =
+                value > 0
+                  ? Math.max(BAR_MIN, (h - PAD_T - PAD_B) * (value / Math.max(1, scale.top)))
+                  : 0;
 
               const focusTopY = h - PAD_B - focusH;
-
               const isToday = todayISO && d.date === todayISO;
               const isAnchor = anchorISO && d.date === anchorISO;
-
               const focusPathD = roundedTopPath(x, focusTopY, focusH, barW);
 
               return (
@@ -156,7 +183,7 @@ export default function WeeklyFocusChart({
                     x={x + barW / 2}
                     y={h - 16}
                     fontSize={12}
-                    fill="#0E1A19"
+                    fill={xAxisLabel}
                     textAnchor="middle"
                     fontWeight={isToday || isAnchor ? '700' : '500'}
                   >

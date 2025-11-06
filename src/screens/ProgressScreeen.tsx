@@ -162,14 +162,14 @@ export default function ProgressScreen() {
         />
 
         {/* Debug reset */}
-        <Pressable
+        {/* <Pressable
           onPress={async () => {
             try { await clearAllProgress(); await clearAllSessions(); } catch (e) { console.log('Reset error', e); }
           }}
           style={styles.resetBtn}
         >
           <Text style={styles.resetText}>Debug: Reset data</Text>
-        </Pressable>
+        </Pressable> */}
       </ScrollView>
     </SafeAreaView>
   );

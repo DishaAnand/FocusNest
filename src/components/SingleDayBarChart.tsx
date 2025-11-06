@@ -11,17 +11,18 @@ import Svg, {
   Path,
   Rect,
 } from 'react-native-svg';
+import { useChartColors } from '../theme/useChartColors';
 
 type Props = {
-  minutes: number;          // focus minutes for the selected day
-  label: string;            // x-axis label (e.g., "Aug 24")
-  color?: string;           // bar color
-  isToday?: boolean;        // <-- NEW: show halo only when true
+  minutes: number;
+  label: string;
+  color?: string;
+  isToday?: boolean;
 };
 
 const PAD_L = 48, PAD_R = 14, PAD_T = 12, PAD_B = 44;
 const TICK_TEXT_SIZE = 11;
-const BAR_RADIUS = 10;      // matches WeeklyFocusChart vibe
+const BAR_RADIUS = 10;
 const BAR_MIN = 2;
 
 const roundUp = (n: number, step: number) => Math.ceil(n / step) * step;
@@ -51,7 +52,6 @@ function makeScale(mins: number, height: number) {
   return { top, ticks, format: (v: number) => `${v / 60}h`, y: toY(top), hybrid: false };
 }
 
-// same rounded-top shape you used in WeeklyFocusChart
 function roundedTopPath(bx: number, topY: number, height: number, width: number) {
   const hh = Math.max(0, height);
   if (hh <= 0) return '';
@@ -75,6 +75,8 @@ export default function SingleDayBarChart({
 }: Props) {
   const [w, setW] = useState(0);
   const [h, setH] = useState(300);
+  const { axisLabel, xAxisLabel, gridLine, gridOpacityMajor, gridOpacityMinor } =
+    useChartColors();
 
   const onLayout = (e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
@@ -85,16 +87,15 @@ export default function SingleDayBarChart({
   const mins = Math.max(0, Math.floor(minutes));
   const scale = useMemo(() => makeScale(mins, h), [mins, h]);
 
-  // geometry
   const innerW = Math.max(0, w - PAD_L - PAD_R);
   const barW = Math.min(90, Math.max(54, Math.round(innerW * 0.22)));
   const barX = PAD_L + Math.round((innerW - barW) / 2);
 
-  // bar height & top
   const hasBar = mins > 0;
-  const barH = hasBar ? Math.max(BAR_MIN, (h - PAD_T - PAD_B) * (mins / Math.max(1, scale.top))) : 0;
+  const barH = hasBar
+    ? Math.max(BAR_MIN, (h - PAD_T - PAD_B) * (mins / Math.max(1, scale.top)))
+    : 0;
   const barTopY = h - PAD_B - barH;
-
   const barPathD = hasBar ? roundedTopPath(barX, barTopY, barH, barW) : '';
 
   return (
@@ -108,16 +109,29 @@ export default function SingleDayBarChart({
             </LinearGradient>
           </Defs>
 
-          {/* grid + y-axis labels */}
+          {/* grid + y labels */}
           <G>
             {scale.ticks.map((t, i) => {
               const y = scale.y(t);
               const major = scale.hybrid ? t % 60 === 0 : true;
               return (
                 <G key={`tick-${i}`}>
-                  <Line x1={PAD_L} x2={w - PAD_R} y1={y} y2={y} stroke="#0B0B0B" opacity={major ? 0.08 : 0.04} />
+                  <Line
+                    x1={PAD_L}
+                    x2={w - PAD_R}
+                    y1={y}
+                    y2={y}
+                    stroke={gridLine}
+                    opacity={major ? gridOpacityMajor : gridOpacityMinor}
+                  />
                   {!!scale.format(t) && (
-                    <SvgText x={PAD_L - 8} y={y + 4} fontSize={TICK_TEXT_SIZE} fill="#4A5A59" textAnchor="end">
+                    <SvgText
+                      x={PAD_L - 8}
+                      y={y + 4}
+                      fontSize={TICK_TEXT_SIZE}
+                      fill={axisLabel}
+                      textAnchor="end"
+                    >
                       {scale.format(t)}
                     </SvgText>
                   )}
@@ -126,7 +140,6 @@ export default function SingleDayBarChart({
             })}
           </G>
 
-          {/* halo — ONLY for today, only if a bar exists */}
           {hasBar && isToday && (
             <Rect
               x={barX - 6}
@@ -140,15 +153,13 @@ export default function SingleDayBarChart({
             />
           )}
 
-          {/* main bar */}
           {hasBar && <Path d={barPathD} fill="url(#sdb_grad)" />}
 
-          {/* x-axis label */}
           <SvgText
             x={barX + barW / 2}
             y={h - 16}
             fontSize={12}
-            fill="#0E1A19"
+            fill={xAxisLabel}
             textAnchor="middle"
             fontWeight="700"
           >
