@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "FocusNest.app"
-               BlueprintName = "FocusNest"
-               ReferencedContainer = "container:FocusNest.xcodeproj">
+               BuildableName = "FocusHaven.app"
+               BlueprintName = "FocusHaven"
+               ReferencedContainer = "container:FocusHaven.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -28,16 +28,6 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "FocusNestTests.xctest"
-               BlueprintName = "FocusNestTests"
-               ReferencedContainer = "container:FocusNest.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
@@ -55,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "FocusNest.app"
-            BlueprintName = "FocusNest"
-            ReferencedContainer = "container:FocusNest.xcodeproj">
+            BuildableName = "FocusHaven.app"
+            BlueprintName = "FocusHaven"
+            ReferencedContainer = "container:FocusHaven.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -67,16 +57,6 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "FocusNest.app"
-            BlueprintName = "FocusNest"
-            ReferencedContainer = "container:FocusNest.xcodeproj">
-         </BuildableReference>
-      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
