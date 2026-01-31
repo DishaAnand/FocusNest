@@ -11,7 +11,7 @@ prepare_react_native_project!
 linkage = ENV['USE_FRAMEWORKS']
 use_frameworks! :linkage => :static if linkage != nil
 
-target 'FocusNest' do
+target 'FocusHaven' do
   config = use_native_modules!
 
   use_react_native!(

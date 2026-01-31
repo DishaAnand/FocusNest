@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, DeviceEventEmitter } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, DeviceEventEmitter, AppState } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import Animated, { useSharedValue, withTiming, useAnimatedProps, Easing } from 'react-native-reanimated';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import Sound from 'react-native-sound';
+import BackgroundTimer from 'react-native-background-timer';
 import { getSoundFile } from '../audio/sounds';
 
 // data stores
@@ -62,13 +63,17 @@ export default function TimerScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [task, setTask] = useState<Task | undefined>();
   const skipNextTaskReset = useRef<boolean>(!!params?.autoStart);
+  const timerEndTime = useRef<number | null>(null);
+  const appState = useRef(AppState.currentState);
+  const backgroundTimerId = useRef<number | null>(null);
+  const silenceSound = useRef<Sound | null>(null);
 
   function mergeTasks(a: Task[], b: Task[]): Task[] {
     const map = new Map<string, Task>();
     [...a, ...b].forEach(t => map.set(t.id, t));
     const arr = Array.from(map.values());
     return arr.length ? arr : [{ id: 'other', title: 'Other', icon: 'refresh-outline' }];
-    }
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -161,24 +166,51 @@ export default function TimerScreen() {
   const [hasBeeped, setHasBeeped] = useState(false);
 
   // (Re)load when soundKey changes
- useEffect(() => {
-  Sound.setCategory('Playback');
-  soundRef.current?.release();
-  soundRef.current = null;
+  useEffect(() => {
+    Sound.setCategory('Playback', true);
+    soundRef.current?.release();
+    soundRef.current = null;
 
-  const filename = getSoundFile(soundKey); // soundKey comes from settings
-  const s = new Sound(filename, Sound.MAIN_BUNDLE, (err) => {
-    if (err) console.warn('Sound load error', err);
-  });
+    const filename = getSoundFile(soundKey);
+    const s = new Sound(filename, Sound.MAIN_BUNDLE, (err) => {
+      if (err) console.warn('Sound load error', err);
+    });
 
-  soundRef.current = s;
+    soundRef.current = s;
 
-  return () => { s && s.release(); };
-}, [soundKey]);
+    return () => { s && s.release(); };
+  }, [soundKey]);
 
+  /* ───────────────── Load silent sound for background audio ───────────────── */
+  useEffect(() => {
+    Sound.setCategory('Playback', true);
+    
+    const s = new Sound('silence.mp3', Sound.MAIN_BUNDLE, (err) => {
+      if (err) {
+        console.warn('Silent sound load error', err);
+        return;
+      }
+      s.setNumberOfLoops(-1); // Loop forever
+    });
+    
+    silenceSound.current = s;
+
+    return () => {
+      s.stop(() => s.release());
+    };
+  }, []);
+
+  /* ───────────────── Play sound when timer reaches 0 ───────────────── */
   useEffect(() => {
     if (left === 0 && !hasBeeped) {
-      try { soundRef.current?.stop(() => soundRef.current?.play()); } catch {}
+      try {
+        // Stop silent audio first
+        silenceSound.current?.stop();
+        // Play the actual timer sound
+        soundRef.current?.stop(() => soundRef.current?.play());
+      } catch (e) {
+        console.warn('Sound play error', e);
+      }
       setHasBeeped(true);
     }
   }, [left, hasBeeped]);
@@ -195,20 +227,18 @@ export default function TimerScreen() {
 
   /* ───────────────── task selection resets current phase ───────────────── */
   useEffect(() => {
-  if (!task) return;
+    if (!task) return;
 
-  // If we navigated with autoStart, ignore the very first reset that happens
-  // when the initial task is set, otherwise it cancels the auto-start.
-  if (skipNextTaskReset.current) {
-    skipNextTaskReset.current = false;
-    return;
-  }
+    if (skipNextTaskReset.current) {
+      skipNextTaskReset.current = false;
+      return;
+    }
 
-  setRun(false);
-  setLeft(mode === 'focus' ? focusSecs : breakSecs);
-  setHasBeeped(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [task?.id]);
+    setRun(false);
+    setLeft(mode === 'focus' ? focusSecs : breakSecs);
+    setHasBeeped(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id]);
 
   /* ───────────────── animations & ticking ───────────────── */
   const progress = useSharedValue(0);
@@ -220,17 +250,93 @@ export default function TimerScreen() {
     theta.value = withTiming(frac * 2 * Math.PI, { duration: 400, easing: Easing.linear });
   }, [left, DURATION, progress, theta]);
 
+  /* ───────────────── UPDATED: Background timer ───────────────── */
   useEffect(() => {
-    let id: ReturnType<typeof setInterval> | undefined;
     if (run) {
-      id = setInterval(() => {
-        setLeft(prev => {
-          if (prev <= 1) { clearInterval(id!); setRun(false); return 0; }
-          return prev - 1;
-        });
+      // Calculate when timer should end
+      if (!timerEndTime.current) {
+        timerEndTime.current = Date.now() + (left * 1000);
+      }
+
+      // Start playing silent audio to keep app active in background
+      try {
+        silenceSound.current?.play();
+      } catch (e) {
+        console.warn('Could not play silent audio', e);
+      }
+
+      // Use background timer instead of regular setInterval
+      backgroundTimerId.current = BackgroundTimer.setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.ceil((timerEndTime.current! - now) / 1000));
+        
+        setLeft(remaining);
+        
+        if (remaining <= 0) {
+          if (backgroundTimerId.current) {
+            BackgroundTimer.clearInterval(backgroundTimerId.current);
+            backgroundTimerId.current = null;
+          }
+          setRun(false);
+          timerEndTime.current = null;
+          
+          // Stop silent audio
+          try {
+            silenceSound.current?.stop();
+          } catch (e) {}
+        }
       }, 1000);
+
+    } else {
+      // Timer stopped
+      timerEndTime.current = null;
+      
+      if (backgroundTimerId.current) {
+        BackgroundTimer.clearInterval(backgroundTimerId.current);
+        backgroundTimerId.current = null;
+      }
+      
+      // Stop silent audio
+      try {
+        silenceSound.current?.stop();
+      } catch (e) {}
     }
-    return () => id && clearInterval(id);
+    
+    return () => {
+      if (backgroundTimerId.current) {
+        BackgroundTimer.clearInterval(backgroundTimerId.current);
+        backgroundTimerId.current = null;
+      }
+    };
+  }, [run, left]);
+
+  /* ───────────────── Handle app background/foreground ───────────────── */
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        if (run && timerEndTime.current) {
+          const now = Date.now();
+          const remaining = Math.max(0, Math.ceil((timerEndTime.current - now) / 1000));
+          
+          setLeft(remaining);
+          
+          if (remaining <= 0) {
+            setRun(false);
+            timerEndTime.current = null;
+            setLeft(0);
+            try {
+              silenceSound.current?.stop();
+            } catch (e) {}
+          }
+        }
+      }
+      
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, [run]);
 
   /* ───────────────── phase transitions ───────────────── */
@@ -285,6 +391,7 @@ export default function TimerScreen() {
 
   const onPrimaryPress = () => {
     if (isFinished) {
+      timerEndTime.current = null;
       if (mode === 'break') {
         setMode('focus');
         setLeft(focusSecs);
@@ -298,10 +405,33 @@ export default function TimerScreen() {
       }
       return;
     }
+    
+    if (run) {
+      timerEndTime.current = null;
+      if (backgroundTimerId.current) {
+        BackgroundTimer.clearInterval(backgroundTimerId.current);
+        backgroundTimerId.current = null;
+      }
+      try {
+        silenceSound.current?.stop();
+      } catch (e) {}
+    }
+    
     setRun(p => !p);
   };
 
   const onCancel = () => {
+    timerEndTime.current = null;
+    
+    if (backgroundTimerId.current) {
+      BackgroundTimer.clearInterval(backgroundTimerId.current);
+      backgroundTimerId.current = null;
+    }
+    
+    try {
+      silenceSound.current?.stop();
+    } catch (e) {}
+    
     if (mode === 'break') {
       setMode('focus');
       setRun(false);
