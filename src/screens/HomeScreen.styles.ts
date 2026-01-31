@@ -83,5 +83,28 @@ export const createHomeStyles = (
       shadowRadius: 6,
       shadowOffset: { width: 0, height: 3 },
     },
+    // In HomeScreen.styles.ts - these should already be there
+    buddyButton: {
+      position: 'absolute',
+      left: hPad,
+      right: hPad,
+      bottom: bottomInset + 92,
+      backgroundColor: colors.primaryBg,
+      borderRadius: radius,
+      paddingVertical: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+
+    buddyButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.primary,
+    },
   });
 };

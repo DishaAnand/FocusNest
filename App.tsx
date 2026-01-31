@@ -3,18 +3,30 @@ import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import HomeScreen from './src/screens/HomeScreen';
 import TimerScreen from './src/screens/TimerScreen';
 import ProgressScreen from './src/screens/ProgressScreeen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import BuddySessionScreen from './src/screens/BuddySessionScreens';
 
-// THEME
 import { ThemeProvider, useAppTheme } from './src/theme/ThemeProvider';
 
 Ionicons.loadFont();
+
 const Tab = createBottomTabNavigator();
+const HomeStackNav = createNativeStackNavigator();
+
+function HomeStack() {
+  return (
+    <HomeStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStackNav.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStackNav.Screen name="BuddySession" component={BuddySessionScreen} />
+    </HomeStackNav.Navigator>
+  );
+}
 
 function RootTabs() {
   const { colors } = useAppTheme();
@@ -42,7 +54,7 @@ function RootTabs() {
         tabBarLabelStyle: { fontSize: 12, paddingBottom: 4 },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Timer" component={TimerScreen} />
       <Tab.Screen name="Progress" component={ProgressScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />

@@ -35,6 +35,7 @@ import type { Task } from '../storage/tasks';
 type RootStackParamList = {
   Home: undefined;
   Timer: { task?: Task; tasks?: Task[]; autoStart?: boolean };
+  BuddySession: undefined
 };
 type HomeNav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -57,7 +58,7 @@ const HomeScreen = () => {
   // initial load + keep in sync
   useEffect(() => {
     let mounted = true;
-    loadTasks().then(t => mounted && setTasks(t)).catch(() => {});
+    loadTasks().then(t => mounted && setTasks(t)).catch(() => { });
     const sub = DeviceEventEmitter.addListener(TASKS_CHANGED_EVENT, (updated: Task[]) => {
       setTasks(updated);
     });
@@ -74,7 +75,7 @@ const HomeScreen = () => {
     try {
       const updated = await upsertTask(newTask);
       setTasks(updated);
-    } catch {}
+    } catch { }
   };
 
   // rename helpers
@@ -142,16 +143,23 @@ const HomeScreen = () => {
             }
             onRename={async (newTitle) => {
               setTasks(prev => prev.map(t => (t.id === item.id ? { ...t, title: newTitle } : t)));
-              try { setTasks(await renameStored(item.id, newTitle)); } catch {}
+              try { setTasks(await renameStored(item.id, newTitle)); } catch { }
             }}
             onDelete={async () => {
               setTasks(prev => prev.filter(t => t.id !== item.id));
-              try { setTasks(await deleteStored(item.id)); } catch {}
+              try { setTasks(await deleteStored(item.id)); } catch { }
             }}
             onEditRequest={() => startEdit(item)}   // pencil inside TaskCard calls this
           />
         )}
       />
+      <TouchableOpacity
+        style={styles.buddyButton}
+        onPress={() => navigation.navigate('BuddySession')}
+        accessibilityLabel="Focus with friend"
+      >
+        <Text style={styles.buddyButtonText}>👥 Focus with Friend</Text>
+      </TouchableOpacity>
 
       {/* Add Task (FAB) */}
       <TouchableOpacity style={styles.addButton} onPress={handleAddTask} accessibilityLabel="Add task">
@@ -217,7 +225,7 @@ const HomeScreen = () => {
                       borderColor: colors.border,
                       borderWidth: 1,
                       opacity: (!editingTask || !editingTitle.trim() ||
-                                editingTitle.trim() === editingTask?.title) ? 0.6 : 1
+                        editingTitle.trim() === editingTask?.title) ? 0.6 : 1
                     }
                   ]}
                 >
