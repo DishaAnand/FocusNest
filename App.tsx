@@ -1,4 +1,3 @@
-// App.tsx
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
@@ -10,7 +9,6 @@ import TimerScreen from './src/screens/TimerScreen';
 import ProgressScreen from './src/screens/ProgressScreeen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
-// THEME
 import { ThemeProvider, useAppTheme } from './src/theme/ThemeProvider';
 
 Ionicons.loadFont();

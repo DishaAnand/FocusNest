@@ -90,7 +90,7 @@ export default function TaskCard({
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="pencil-outline" size={18} />
+                <Ionicons name="pencil-outline" size={18} color="#666" />
               </TouchableOpacity>
             )}
           </View>
