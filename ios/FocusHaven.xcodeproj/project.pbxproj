@@ -17,7 +17,8 @@
 		6DF614C62E65EC5B00C2BF60 /* tadaa-47995.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614C22E65EC5B00C2BF60 /* tadaa-47995.mp3 */; };
 		6DF614C72E65EC5B00C2BF60 /* happy-210643.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614BF2E65EC5B00C2BF60 /* happy-210643.mp3 */; };
 		6DF614C82E65EC5B00C2BF60 /* cat-meow-12-fx-306191.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6DF614BE2E65EC5B00C2BF60 /* cat-meow-12-fx-306191.mp3 */; };
-		C8F73FB64B6E1FD75421CA58 /* libPods-FocusHaven.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 65F55750229B916F0E0E3318 /* libPods-FocusHaven.a */; };
+		AAFBC8C50D06AFE39ED3B80E /* libPods-FocusHaven.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F564BBB94530D6FCCD63732 /* libPods-FocusHaven.a */; };
+		E79334662F31595B007FA7A5 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E79334652F31595B007FA7A5 /* GoogleService-Info.plist */; };
 		E7C5D0422EC3F24B002478FB /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E7C5D0412EC3F24B002478FB /* main.m */; };
 		E7C5D0452EC3F287002478FB /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = E7C5D0442EC3F287002478FB /* AppDelegate.mm */; };
 		E7C5D0472EC3F2B3002478FB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E7C5D0462EC3F2B3002478FB /* Images.xcassets */; };
@@ -26,8 +27,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		037B55AA4CBFEFD229113A45 /* Pods-FocusHaven.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusHaven.debug.xcconfig"; path = "Target Support Files/Pods-FocusHaven/Pods-FocusHaven.debug.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* FocusHaven.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusHaven.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		65F55750229B916F0E0E3318 /* libPods-FocusHaven.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FocusHaven.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6D5BB1342E5267A70014F33E /* beep-alarm-366507.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "beep-alarm-366507.mp3"; sourceTree = "<group>"; };
 		6D5BBC262E520E2C00D10639 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		6D5BBC282E520E3C00D10639 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -37,8 +38,9 @@
 		6DF614C02E65EC5B00C2BF60 /* notification-ping-335500.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "notification-ping-335500.mp3"; sourceTree = "<group>"; };
 		6DF614C12E65EC5B00C2BF60 /* school-bell-87744.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "school-bell-87744.mp3"; sourceTree = "<group>"; };
 		6DF614C22E65EC5B00C2BF60 /* tadaa-47995.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "tadaa-47995.mp3"; sourceTree = "<group>"; };
-		AD143AA680093C8D807BE094 /* Pods-FocusHaven.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusHaven.debug.xcconfig"; path = "Target Support Files/Pods-FocusHaven/Pods-FocusHaven.debug.xcconfig"; sourceTree = "<group>"; };
-		E1BF8FC08096F1F01D32960E /* Pods-FocusHaven.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusHaven.release.xcconfig"; path = "Target Support Files/Pods-FocusHaven/Pods-FocusHaven.release.xcconfig"; sourceTree = "<group>"; };
+		9B5EDC1DF295842767F68038 /* Pods-FocusHaven.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusHaven.release.xcconfig"; path = "Target Support Files/Pods-FocusHaven/Pods-FocusHaven.release.xcconfig"; sourceTree = "<group>"; };
+		9F564BBB94530D6FCCD63732 /* libPods-FocusHaven.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FocusHaven.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E79334652F31595B007FA7A5 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		E7C5D0412EC3F24B002478FB /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E7C5D0432EC3F271002478FB /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		E7C5D0442EC3F287002478FB /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -57,7 +59,7 @@
 			files = (
 				6D5BBC292E520E3C00D10639 /* AudioToolbox.framework in Frameworks */,
 				6D5BBC272E520E2C00D10639 /* AVFoundation.framework in Frameworks */,
-				C8F73FB64B6E1FD75421CA58 /* libPods-FocusHaven.a in Frameworks */,
+				AAFBC8C50D06AFE39ED3B80E /* libPods-FocusHaven.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +72,7 @@
 				6D5BBC282E520E3C00D10639 /* AudioToolbox.framework */,
 				6D5BBC262E520E2C00D10639 /* AVFoundation.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				65F55750229B916F0E0E3318 /* libPods-FocusHaven.a */,
+				9F564BBB94530D6FCCD63732 /* libPods-FocusHaven.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -100,6 +102,7 @@
 				E7C5D0432EC3F271002478FB /* AppDelegate.h */,
 				E7C5D0412EC3F24B002478FB /* main.m */,
 				6DF614C02E65EC5B00C2BF60 /* notification-ping-335500.mp3 */,
+				E79334652F31595B007FA7A5 /* GoogleService-Info.plist */,
 				E7C5D0482EC3F2C8002478FB /* Info.plist */,
 				E7C5D0442EC3F287002478FB /* AppDelegate.mm */,
 				E7C5D0462EC3F2B3002478FB /* Images.xcassets */,
@@ -129,8 +132,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				AD143AA680093C8D807BE094 /* Pods-FocusHaven.debug.xcconfig */,
-				E1BF8FC08096F1F01D32960E /* Pods-FocusHaven.release.xcconfig */,
+				037B55AA4CBFEFD229113A45 /* Pods-FocusHaven.debug.xcconfig */,
+				9B5EDC1DF295842767F68038 /* Pods-FocusHaven.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -142,13 +145,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "FocusHaven" */;
 			buildPhases = (
-				070FF4CF64CDB6AB810465A6 /* [CP] Check Pods Manifest.lock */,
+				9C1E88DBD942D3F939D6890E /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				CC1D24065D19FA544CA96A2D /* [CP] Embed Pods Frameworks */,
-				EC3DD2843EDA65D9C5DEA446 /* [CP] Copy Pods Resources */,
+				F5FA3A51A5503D1293FB116F /* [CP] Embed Pods Frameworks */,
+				FE2C24640398D88FE5356E78 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -200,6 +203,7 @@
 				E7C5D0472EC3F2B3002478FB /* Images.xcassets in Resources */,
 				6DF614C32E65EC5B00C2BF60 /* notification-ping-335500.mp3 in Resources */,
 				6DF614C42E65EC5B00C2BF60 /* school-bell-87744.mp3 in Resources */,
+				E79334662F31595B007FA7A5 /* GoogleService-Info.plist in Resources */,
 				6DF614C52E65EC5B00C2BF60 /* bell-chime-238836.mp3 in Resources */,
 				6DF614C62E65EC5B00C2BF60 /* tadaa-47995.mp3 in Resources */,
 				6DF614C72E65EC5B00C2BF60 /* happy-210643.mp3 in Resources */,
@@ -228,7 +232,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\nexport NODE_BINARY=${NODE_BINARY:-$(which node)}\nREACT_NATIVE_PATH=\"${SRCROOT}/../node_modules/react-native\"\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		070FF4CF64CDB6AB810465A6 /* [CP] Check Pods Manifest.lock */ = {
+		9C1E88DBD942D3F939D6890E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -250,7 +254,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		CC1D24065D19FA544CA96A2D /* [CP] Embed Pods Frameworks */ = {
+		F5FA3A51A5503D1293FB116F /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -267,7 +271,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FocusHaven/Pods-FocusHaven-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		EC3DD2843EDA65D9C5DEA446 /* [CP] Copy Pods Resources */ = {
+		FE2C24640398D88FE5356E78 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -301,7 +305,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AD143AA680093C8D807BE094 /* Pods-FocusHaven.debug.xcconfig */;
+			baseConfigurationReference = 037B55AA4CBFEFD229113A45 /* Pods-FocusHaven.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
@@ -336,7 +340,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E1BF8FC08096F1F01D32960E /* Pods-FocusHaven.release.xcconfig */;
+			baseConfigurationReference = 9B5EDC1DF295842767F68038 /* Pods-FocusHaven.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;

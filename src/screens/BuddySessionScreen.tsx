@@ -17,21 +17,22 @@ interface Props {
   onBack: () => void;
 }
 
-// Reanimated circle for the timer ring/dot
 const AnimatedCircle = Reanimated.createAnimatedComponent(Circle);
 
 const BuddySessionScreen = ({ onBack }: Props) => {
   const insets = useSafeAreaInsets();
   const [task, setTask] = useState('');
-  const [duration, setDuration] = useState(25);
-  const [screen, setScreen] = useState<'create' | 'share' | 'active'>('create');
-  const [sessionLink] = useState('https://focushaven.app/buddy/abc123 ');
+  const [duration, setDuration] = useState(1);
+  const [screen, setScreen] = useState<'create' | 'share' | 'active' | 'complete'>('create');
+  const [sessionLink] = useState('https://focushaven.app/buddy/abc123');
   const [timeLeft, setTimeLeft] = useState(0);
   const [friendStatus, setFriendStatus] = useState<'focused' | 'away'>('focused');
   const [friendViolations, setFriendViolations] = useState(0);
+  const [rating, setRating] = useState(0);
   const pulseAnim = useRef(new RNAnimated.Value(0.5)).current;
+  const celebrateAnim = useRef(new RNAnimated.Value(0)).current;
 
-  /* ─── Timer Geometry (moved to top so hooks can use them) ─── */
+  /* ─── Timer Geometry ─── */
   const RING_STROKE = 8;
   const DOT_RADIUS = 14;
   const RADIUS = 120;
@@ -45,10 +46,9 @@ const BuddySessionScreen = ({ onBack }: Props) => {
   const progress = useSharedValue(0);
   const theta = useSharedValue(0);
 
-  /* ─── Animate ring/dot when timeLeft changes (only when active) ─── */
+  /* ─── Animate ring/dot when timeLeft changes ─── */
   useEffect(() => {
     if (screen !== 'active') return;
-    // frac goes 0→1 as timer counts down (0 at start, 1 at end)
     const frac = totalSeconds <= 0 ? 1 : 1 - timeLeft / totalSeconds;
     progress.value = withTiming(frac, { duration: 400, easing: Easing.linear });
     theta.value = withTiming(frac * 2 * Math.PI, { duration: 400, easing: Easing.linear });
@@ -60,7 +60,7 @@ const BuddySessionScreen = ({ onBack }: Props) => {
   }));
 
   const dotProps = useAnimatedProps(() => {
-    const a = theta.value; // 0 at top (12 o'clock) because of G rotation="-90"
+    const a = theta.value;
     return {
       cx: CENTER + RADIUS * Math.cos(a),
       cy: CENTER + RADIUS * Math.sin(a),
@@ -80,6 +80,19 @@ const BuddySessionScreen = ({ onBack }: Props) => {
     return () => pulseAnim.stopAnimation();
   }, [screen, pulseAnim]);
 
+  // Celebration bounce on complete
+  useEffect(() => {
+    if (screen === 'complete') {
+      celebrateAnim.setValue(0);
+      RNAnimated.spring(celebrateAnim, {
+        toValue: 1,
+        tension: 40,
+        friction: 5,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [screen, celebrateAnim]);
+
   // Countdown timer
   useEffect(() => {
     if (screen !== 'active') return;
@@ -88,7 +101,7 @@ const BuddySessionScreen = ({ onBack }: Props) => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          Alert.alert('🎉 Session Complete!', 'Great focus session!');
+          setScreen('complete');
           return 0;
         }
         return prev - 1;
@@ -122,9 +135,7 @@ const BuddySessionScreen = ({ onBack }: Props) => {
     } catch {}
   };
 
-  const handleCopy = () => {
-    Alert.alert('Copied!', 'Link copied to clipboard');
-  };
+  const handleCopy = () => Alert.alert('Copied!', 'Link copied to clipboard');
 
   const getStatusBadge = (status: string) => {
     if (status === 'focused') return { text: '✅ Focused', bg: '#E8F5E9', color: '#2e7d32' };
@@ -132,7 +143,103 @@ const BuddySessionScreen = ({ onBack }: Props) => {
     return { text: '', bg: '#f0f0f0', color: '#666' };
   };
 
-  // ─── SCREEN 4: ACTIVE SESSION ─────────────────────────────
+  // ─── SCREEN 6: COMPLETION ─────────────────────────────────
+  if (screen === 'complete') {
+    const scaleInterp = celebrateAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.5, 1.2, 1] });
+
+    return (
+      <View style={{ flex: 1, backgroundColor: '#f5f5f0', paddingTop: insets.top }}>
+
+        {/* Header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16 }}>
+          <TouchableOpacity onPress={onBack}>
+            <Text style={{ fontSize: 24, color: '#1a1a1a' }}>✕</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#1a1a1a' }}>Session Complete</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <View style={{ flex: 1, paddingHorizontal: 20, alignItems: 'center' }}>
+
+          {/* Celebration emoji with bounce */}
+          <RNAnimated.Text style={{ fontSize: 72, marginTop: 24, marginBottom: 8, transform: [{ scale: scaleInterp }] }}>
+            🎉
+          </RNAnimated.Text>
+
+          <Text style={{ fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 4 }}>Great session!</Text>
+          <Text style={{ fontSize: 14, color: '#666', marginBottom: 28 }}>You and Sarah stayed focused</Text>
+
+          {/* Points + Streak */}
+          <View style={{ width: '100%', flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+            <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 16, alignItems: 'center' }}>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: '#2d7a6e' }}>+50</Text>
+              <Text style={{ fontSize: 13, color: '#666', marginTop: 4 }}>Points Earned</Text>
+            </View>
+            <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 16, alignItems: 'center' }}>
+              <Text style={{ fontSize: 28, fontWeight: '700', color: '#e67e22' }}>6 🔥</Text>
+              <Text style={{ fontSize: 13, color: '#666', marginTop: 4 }}>Day Streak</Text>
+            </View>
+          </View>
+
+          {/* Session summary */}
+          <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#1a1a1a' }}>{task}</Text>
+              <Text style={{ fontSize: 14, color: '#666' }}>{duration} min</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2d7a6e' }} />
+                <Text style={{ fontSize: 13, color: '#666' }}>You: 0 violations</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#e67e22' }} />
+                <Text style={{ fontSize: 13, color: '#666' }}>Sarah: {friendViolations}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Rate buddy */}
+          <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 28 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1a1a1a', marginBottom: 12, textAlign: 'center' }}>Rate Sarah's focus</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+              {[1, 2, 3, 4, 5].map(star => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <Text style={{ fontSize: 32 }}>{star <= rating ? '⭐' : '☆'}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Buttons */}
+          <View style={{ width: '100%', gap: 12 }}>
+            <TouchableOpacity
+              style={{ backgroundColor: '#2d7a6e', borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
+              onPress={() => {
+                setTask('');
+                setDuration(1);
+                setRating(0);
+                setFriendStatus('focused');
+                setFriendViolations(0);
+                setScreen('create');
+              }}
+            >
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>Focus Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ backgroundColor: '#fff', borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
+              onPress={onBack}
+            >
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#1a1a1a' }}>Back Home</Text>
+            </TouchableOpacity>
+          </View>
+
+        </View>
+      </View>
+    );
+  }
+
+  // ─── SCREEN 4 & 5: ACTIVE SESSION ─────────────────────────
   if (screen === 'active') {
     const myBadge = getStatusBadge('focused');
     const friendBadge = getStatusBadge(friendStatus);
@@ -164,44 +271,21 @@ const BuddySessionScreen = ({ onBack }: Props) => {
           )}
         </View>
 
-        {/* Circular Timer (Exact TimerScreen integration) */}
+        {/* Circular Timer */}
         <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 28 }}>
           <View style={{ justifyContent: 'center', alignItems: 'center', width: SIZE, height: SIZE }}>
             <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-              {/* rotation="-90" makes 0 radians start at 12 o'clock and move clockwise */}
               <G rotation="-90" origin={`${CENTER}, ${CENTER}`}>
-                {/* Track (full ring color) */}
-                <Circle
-                  cx={CENTER}
-                  cy={CENTER}
-                  r={RADIUS}
-                  stroke="#2d7a6e"
-                  strokeWidth={RING_STROKE}
-                  fill="none"
-                />
-                {/* Animated progress mask (reveals track as it shrinks) */}
+                <Circle cx={CENTER} cy={CENTER} r={RADIUS} stroke="#2d7a6e" strokeWidth={RING_STROKE} fill="none" />
                 <AnimatedCircle
-                  cx={CENTER}
-                  cy={CENTER}
-                  r={RADIUS}
-                  stroke="#f5f5f0" // Background color acts as mask
-                  strokeWidth={RING_STROKE}
-                  strokeLinecap="round"
-                  fill="none"
-                  strokeDasharray={CIRCLE_LEN}
+                  cx={CENTER} cy={CENTER} r={RADIUS}
+                  stroke="#f5f5f0" strokeWidth={RING_STROKE} strokeLinecap="round"
+                  fill="none" strokeDasharray={CIRCLE_LEN}
                   animatedProps={ringProps}
                 />
-                {/* Animated dot */}
-                <AnimatedCircle
-                  r={DOT_RADIUS}
-                  fill="#fff"
-                  stroke="#2d7a6e"
-                  strokeWidth={2}
-                  animatedProps={dotProps}
-                />
+                <AnimatedCircle r={DOT_RADIUS} fill="#fff" stroke="#2d7a6e" strokeWidth={2} animatedProps={dotProps} />
               </G>
             </Svg>
-
             <Text style={{ position: 'absolute', fontSize: 56, fontWeight: '700', color: '#1a1a1a' }}>
               {formatTime(timeLeft)}
             </Text>
@@ -210,8 +294,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
 
         {/* Buddy Cards */}
         <View style={{ paddingHorizontal: 20, flexDirection: 'row', gap: 12 }}>
-
-          {/* My Card */}
           <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 16, alignItems: 'center' }}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#2d7a6e', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
               <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff' }}>Y</Text>
@@ -224,7 +306,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
             <Text style={{ fontSize: 11, color: '#999', marginTop: 8 }}>Violations: 0</Text>
           </View>
 
-          {/* Friend Card */}
           <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 16, alignItems: 'center' }}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#e67e22', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
               <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff' }}>S</Text>
@@ -236,7 +317,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
             </View>
             <Text style={{ fontSize: 11, color: '#999', marginTop: 8 }}>Violations: {friendViolations}</Text>
           </View>
-
         </View>
       </View>
     );
@@ -247,7 +327,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
     return (
       <View style={{ flex: 1, backgroundColor: '#f5f5f0', paddingTop: insets.top }}>
 
-        {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16 }}>
           <TouchableOpacity onPress={() => setScreen('create')}>
             <Text style={{ fontSize: 28, color: '#1a1a1a' }}>←</Text>
@@ -258,7 +337,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
 
         <View style={{ flex: 1, paddingHorizontal: 20, alignItems: 'center' }}>
 
-          {/* Pulsing indicator */}
           <RNAnimated.View style={{ opacity: pulseAnim, marginTop: 32, marginBottom: 16 }}>
             <ActivityIndicator size="large" color="#2d7a6e" />
           </RNAnimated.View>
@@ -266,21 +344,18 @@ const BuddySessionScreen = ({ onBack }: Props) => {
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginBottom: 6 }}>Waiting for your friend...</Text>
           <Text style={{ fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 32 }}>Share the link below so they can join</Text>
 
-          {/* Session summary */}
           <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
             <Text style={{ fontSize: 11, fontWeight: '600', color: '#666', marginBottom: 6 }}>YOUR SESSION</Text>
             <Text style={{ fontSize: 16, fontWeight: '600', color: '#1a1a1a' }}>{task}</Text>
             <Text style={{ fontSize: 14, color: '#666', marginTop: 4 }}>{duration} min · Starting now</Text>
           </View>
 
-          {/* Link */}
           <View style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
             <Text style={{ fontSize: 11, fontWeight: '600', color: '#666', marginBottom: 6 }}>SESSION LINK</Text>
             <Text style={{ fontSize: 14, color: '#2d7a6e' }} numberOfLines={1}>{sessionLink}</Text>
           </View>
 
-          {/* Copy + Share buttons */}
-          <View style={{ width: '100%', flexDirection: 'row', gap: 12, marginBottom: 40 }}>
+          <View style={{ width: '100%', flexDirection: 'row', gap: 12, marginBottom: 24 }}>
             <TouchableOpacity
               style={{ flex: 1, backgroundColor: '#fff', borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
               onPress={handleCopy}
@@ -295,8 +370,7 @@ const BuddySessionScreen = ({ onBack }: Props) => {
             </TouchableOpacity>
           </View>
 
-          {/* Goes to Screen 4 for demo */}
-         {/* Demo button - remove when Firebase is live */}
+          {/* Demo button - remove when Firebase is live */}
           <TouchableOpacity
             style={{ backgroundColor: '#2d7a6e', borderRadius: 12, padding: 14, alignItems: 'center', width: '100%', marginBottom: 16 }}
             onPress={() => {
@@ -309,7 +383,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
             <Text style={{ fontSize: 15, fontWeight: '600', color: '#fff' }}>📲 Demo: Friend Joined!</Text>
           </TouchableOpacity>
 
-          {/* Start Solo - goes back to main app */}
           <TouchableOpacity onPress={onBack}>
             <Text style={{ fontSize: 14, color: '#666', textDecorationLine: 'underline' }}>Start Solo Instead</Text>
           </TouchableOpacity>
@@ -323,7 +396,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
   return (
     <View style={{ flex: 1, backgroundColor: '#f5f5f0', paddingTop: insets.top }}>
 
-      {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16 }}>
         <TouchableOpacity onPress={onBack}>
           <Text style={{ fontSize: 28, color: '#1a1a1a' }}>←</Text>
@@ -334,7 +406,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
 
       <View style={{ paddingHorizontal: 20 }}>
 
-        {/* Task Input */}
         <Text style={{ fontSize: 12, fontWeight: '600', color: '#666', marginBottom: 10 }}>YOUR TASK</Text>
         <TextInput
           style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, fontSize: 16, marginBottom: 24 }}
@@ -344,14 +415,13 @@ const BuddySessionScreen = ({ onBack }: Props) => {
           onChangeText={setTask}
         />
 
-        {/* Duration */}
         <Text style={{ fontSize: 12, fontWeight: '600', color: '#666', marginBottom: 10 }}>DURATION</Text>
         <View style={{ flexDirection: 'row', backgroundColor: '#fff', padding: 4, borderRadius: 12, marginBottom: 24 }}>
           <TouchableOpacity
-            style={{ flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', backgroundColor: duration === 25 ? '#2d7a6e' : 'transparent' }}
-            onPress={() => setDuration(25)}
+            style={{ flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', backgroundColor: duration === 1 ? '#2d7a6e' : 'transparent' }}
+            onPress={() => setDuration(1)}
           >
-            <Text style={{ fontWeight: '600', color: duration === 25 ? '#fff' : '#1a1a1a' }}>25 min</Text>
+            <Text style={{ fontWeight: '600', color: duration === 1 ? '#fff' : '#1a1a1a' }}>1 min</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={{ flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', backgroundColor: duration === 50 ? '#2d7a6e' : 'transparent' }}
@@ -361,7 +431,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
           </TouchableOpacity>
         </View>
 
-        {/* Start Time */}
         <Text style={{ fontSize: 12, fontWeight: '600', color: '#666', marginBottom: 10 }}>START TIME</Text>
         <View style={{ flexDirection: 'row', backgroundColor: '#fff', padding: 4, borderRadius: 12, marginBottom: 24 }}>
           <TouchableOpacity style={{ flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', backgroundColor: '#2d7a6e' }}>
@@ -375,7 +444,6 @@ const BuddySessionScreen = ({ onBack }: Props) => {
           </TouchableOpacity>
         </View>
 
-        {/* Create Button */}
         <TouchableOpacity
           style={{ backgroundColor: '#2d7a6e', borderRadius: 12, padding: 18, alignItems: 'center', opacity: task.trim() ? 1 : 0.5 }}
           onPress={() => {
