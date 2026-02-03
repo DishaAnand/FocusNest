@@ -184,6 +184,7 @@ const JoinScreen = ({ sessionId, onBack, onJoined }: Props) => {
       setJoined(true);
       setSessionData(session);
       setScreen('waiting');
+      onJoined(); // Notify parent component that user joined
     } catch (e) {
       Alert.alert('Error', 'Could not join session. Try again.');
       setJoining(false);
