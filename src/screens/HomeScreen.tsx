@@ -15,7 +15,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import TaskCard from '../components/TaskCard';
 import { useNavigation } from '@react-navigation/native';
 import BuddySessionScreen from './BuddySessionScreen';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWindowDimensions } from 'react-native';
 import { createHomeStyles } from './HomeScreen.styles';
