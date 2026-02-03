@@ -311,7 +311,7 @@ const BuddySessionScreen = ({ onBack }: Props) => {
               style={{ backgroundColor: '#fff', borderRadius: 12, paddingVertical: 16, alignItems: 'center' }}
               onPress={onBack}
             >
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>Back Home</Text>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#1a1a1a' }}>Back Home</Text>
             </TouchableOpacity>
           </View>
 
