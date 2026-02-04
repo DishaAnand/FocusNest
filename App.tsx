@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Linking, Modal } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// SafeAreaProvider causes crash - screens handle their own safe areas via useSafeAreaInsets
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
