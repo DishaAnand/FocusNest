@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,9 +26,18 @@ interface Props {
   onBack: () => void;
 }
 
-const AnimatedCircle = Reanimated.createAnimatedComponent(Circle);
+// Create AnimatedCircle lazily to avoid module-scope initialization issues
+let _AnimatedCircle: ReturnType<typeof Reanimated.createAnimatedComponent> | null = null;
+const getAnimatedCircle = () => {
+  if (!_AnimatedCircle) {
+    _AnimatedCircle = Reanimated.createAnimatedComponent(Circle);
+  }
+  return _AnimatedCircle;
+};
 
 const BuddySessionScreen = ({ onBack }: Props) => {
+  // Get AnimatedCircle lazily (deferred from module scope)
+  const AnimatedCircle = useMemo(() => getAnimatedCircle(), []);
   const insets = useSafeAreaInsets();
   const [task, setTask] = useState('');
   const [duration, setDuration] = useState(25);
